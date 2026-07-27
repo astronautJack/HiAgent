@@ -1,0 +1,24 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git *)",
+      "Bash(code-review-graph *)",
+      "Bash(logscope-triage *)",
+      "Bash(uv tool install *)",
+      "Bash(uv tool upgrade *)",
+      "Bash(uvx code-review-graph *)"
+    ],
+    "deny": [
+      "Bash(git commit *)",
+      "Bash(git push *)",
+      "Bash(rm *)"
+    ]
+  },
+  "mcpServers": {
+    "crg": {
+      "command": "uvx",
+      "args": ["code-review-graph", "mcp"],
+      "type": "stdio"
+    }
+  }
+}
