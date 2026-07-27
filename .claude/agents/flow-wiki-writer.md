@@ -23,6 +23,18 @@ tools: Read, Write, Bash, Grep, Glob
 3. Write `<out-dir>/error_index.md`（聚合所有页 error_catalog 成查表，小，给 wiki-reader 索引式检索）。
 4. Write `<out-dir>/README.md`（生命周期清单 + `last_sync_commit`）。
 
+## CRG MCP 工具（首选，Bash 兜底）
+
+settings.json 已配 `crg` MCP server。MCP 给结构化返回，免解析 stdout。
+
+| 用途 | MCP 工具（首选） | Bash 兜底 |
+|---|---|---|
+| 列所有执行流 | `list_flows_tool` | `flows` |
+| 看单流（入口调用链） | `get_flow_tool` | `flow --name <入口> --source` |
+| 受变化影响的流 | `get_affected_flows_tool` | — |
+| callees_of 下钻 | `query_graph_tool` | `query callees_of <节点>` |
+| 社区分组辅助 | `list_communities_tool` / `get_community_tool` | `communities` / `community <id>` |
+
 ## 约束
 
 - 只在 `<out-dir>` 下写，不碰仓库源码。

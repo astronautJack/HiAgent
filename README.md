@@ -85,20 +85,31 @@ flowchart TB
         Entry["智能路由 / entry.js"]
     end
 
-    subgraph CAP[第1层 共享能力]
+    subgraph WF[用例 workflow 纯编排]
+        Diag[diag]
+        BugT[bug-trace]
+        FeatD[feature-design]
+        WMap[wiki-map]
+        WDoc[wiki-doc]
+        WFlow[wiki-flow]
+        ExpA[exp-archive]
+        ExpS[exp-search]
+    end
+
+    subgraph CAP[共享能力]
         CG[code-graph]
         WR[wiki-reader]
         CT[code-tracer]
         LP[log-parser]
     end
 
-    subgraph PROD[第2层 Wiki 生产者]
+    subgraph PROD[Wiki 生产者]
         AW[arch-wiki-writer]
         FW[flow-wiki-writer]
         EW[exp-wiki-writer]
     end
 
-    subgraph FEAT[第2层 feature 流水线]
+    subgraph FEAT[feature 流水线]
         FP[feature-planner]
         FC[feature-coder]
         FR[feature-reviewer]
@@ -110,14 +121,14 @@ flowchart TB
     ATH["雅典娜<br/>向量化原子知识库 RAG<br/>⏳ 后续接入"]
 
     Sess --> Entry
-    Entry --> Diag[diag]
-    Entry --> BugT[bug-trace]
-    Entry --> FeatD[feature-design]
-    Entry --> WMap[wiki-map]
-    Entry --> WDoc[wiki-doc]
-    Entry --> WFlow[wiki-flow]
-    Entry --> ExpA[exp-archive]
-    Entry --> ExpS[exp-search]
+    Entry --> Diag
+    Entry --> BugT
+    Entry --> FeatD
+    Entry --> WMap
+    Entry --> WDoc
+    Entry --> WFlow
+    Entry --> ExpA
+    Entry --> ExpS
 
     Diag --> LP
     Diag --> WR

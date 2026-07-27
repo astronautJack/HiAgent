@@ -27,6 +27,21 @@ tools: Read, Write, Bash, Grep, Glob
 1. code-graph 已跑 `wiki` 子命令，结构页在 `<repo>/.code-review-graph/wiki/`。
 2. 同步到 `<wikiPath>`（覆盖前检查既有文件，diff 交人审）。
 
+## CRG MCP 工具（首选，Bash 兜底）
+
+settings.json 已配 `crg` MCP server。架构文档天然贴这些 MCP 工具：
+
+| 用途 | MCP 工具（首选） | Bash 兜底 |
+|---|---|---|
+| 社区清单 | `list_communities_tool` | `communities` |
+| 单社区详情 | `get_community_tool` | `community <id>` |
+| 架构概览 | `get_architecture_overview_tool` | `architecture` |
+| 生成结构 wiki | `generate_wiki_tool` | `wiki` |
+| 取单 wiki 页 | `get_wiki_page_tool` | — |
+| 高连接节点（热点） | `get_hub_nodes_tool` | — |
+| 瓶颈节点 | `get_bridge_nodes_tool` | — |
+| 意外跨社区耦合 | `get_surprising_connections_tool` | — |
+
 ## 约束
 
 - 只在 `<out-dir>`/`<wikiPath>` 下写，不碰仓库源码。

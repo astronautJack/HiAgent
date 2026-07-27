@@ -22,6 +22,15 @@ tools: Read, Grep, Bash, Glob
 4. **无 wiki 或未命中**：返 null（调用方退回源码）。
 5. 输出：命中摘要（调用链 + 错误目录条目 + source_paths 锚点，≤300 行）。
 
+## CRG MCP 工具（兜底，符号定位时可选）
+
+settings.json 已配 `crg` MCP server。wiki 无/未命中需退回源码定位符号时，MCP 语义搜索比 Bash keyword 搜更准：
+
+| 用途 | MCP 工具 | Bash 兜底 |
+|---|---|---|
+| 按名/语义搜节点 | `semantic_search_nodes_tool` | `search "<符号>"` |
+| 紧凑入口上下文 | `get_minimal_context_tool` | — |
+
 ## 约束
 
 - 只读（tools 不含 Write/Edit）；Bash 仅 `git` 与 `code-review-graph search`（定位符号兜底）。

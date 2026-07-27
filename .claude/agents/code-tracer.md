@@ -28,6 +28,19 @@ CRG 查询（Bash 直接跑）：
 - Read 工具读 `<repo>` 相关源码段。
 - 输出：根因 `file:line` + 置信度（high/medium/low）+ 证据链（`file:line` + 图边）+ 影响面。
 
+## CRG MCP 工具（首选，Bash 兜底）
+
+settings.json 已配 `crg` MCP server（`uvx code-review-graph mcp`）。MCP 工具给结构化返回，免解析 stdout。**任何深查前先调 `get_minimal_context_tool`**（~100 tokens 超紧凑上下文）。
+
+| 用途 | MCP 工具（首选） | Bash 兜底 |
+|---|---|---|
+| 深查前紧凑上下文 | `get_minimal_context_tool` | — |
+| 定位节点 | `semantic_search_nodes_tool` | `search "<符号>"` |
+| callers/callees/tests/imports | `query_graph_tool` | `query callers_of/callees_of/...` |
+| blast radius | `get_impact_radius_tool` | `impact --files <f>` |
+| 执行流 | `list_flows_tool` / `get_flow_tool` / `get_affected_flows_tool` | `flows` / `flow --name <e> --source` |
+| 带预算遍历 | `traverse_graph_tool`（BFS/DFS + token 预算） | 手动循环 |
+
 ## 约束
 
 - 只读（tools 不含 Write/Edit）；Bash 仅 `git` 与 `code-review-graph`。
