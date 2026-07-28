@@ -144,77 +144,14 @@ claude
 ## 产品结构
 
 ```mermaid
-flowchart LR
-    subgraph UI[用户入口]
-        Sess[Claude Code 会话]
-        Entry["智能路由 / entry.js"]
-    end
-
-    subgraph WF[用例 workflow]
-        direction TB
-        subgraph WFA[分析定位]
-            Diag[diag]
-            BugT[bug-trace]
-            FeatD[feature-design]
-        end
-        subgraph WFW[wiki 生成]
-            WMap[wiki-map]
-            WDoc[wiki-doc]
-            WFlow[wiki-flow]
-        end
-        subgraph WFE[经验]
-            ExpA[exp-archive]
-            ExpS[exp-search]
-        end
-    end
-
-    subgraph AGENTS[agents]
-        direction TB
-        subgraph CAP[共享能力]
-            CG[code-graph]
-            WR[wiki-reader]
-            CT[code-tracer]
-            LP[log-parser]
-        end
-        subgraph PROD[Wiki 生产者]
-            AW[arch-wiki-writer]
-            FW[flow-wiki-writer]
-            EW[exp-wiki-writer]
-        end
-        subgraph FEAT[feature 流水线]
-            FP[feature-planner]
-            FC[feature-coder]
-            FR[feature-reviewer]
-            FT[feature-tester]
-        end
-    end
-
-    Wiki[Wiki<br/>Markdown 知识库]
-    CLI["logscope-triage CLI<br/>Drain3 + 鸿蒙 parser"]
-    ATH["私有向量数据库<br/>RAG 检索<br/>⏳ 后续接入"]
-
-    Sess --> Entry
-    Entry --> WFA
-    Entry --> WFW
-    Entry --> WFE
-
-    Diag --> LP
-    Diag --> WR
-    Diag --> CT
-    BugT --> WR
-    BugT --> CT
-    FeatD --> FP
-    WMap --> CG
-    WMap --> AW
-    WDoc --> CG
-    WDoc --> AW
-    WFlow --> FW
-    ExpA --> EW
-    ExpS --> WR
-
-    AW --> Wiki
-    FW --> Wiki
-    EW --> Wiki
-    LP --> CLI
-    Wiki --> ATH
+flowchart TB
+    Sess["用户 / CodeAgent 会话"] --> Entry["智能路由 entry.js"]
+    Entry --> WFs["用例 workflow（8）<br/>━━━━━━━━━━━━<br/>分析定位：diag · bug-trace · feature-design<br/>wiki 生成：wiki-map · wiki-doc · wiki-flow<br/>经验：exp-archive · exp-search"]
+    WFs --> Shared["共享能力（4）<br/>code-graph · wiki-reader<br/>code-tracer · log-parser"]
+    WFs --> Producers["Wiki 生产者（3）<br/>arch · flow · exp-wiki-writer"]
+    WFs --> Pipeline["feature 流水线（4）<br/>planner · coder · reviewer · tester"]
+    Shared --> CRG[("CRG<br/>code-review-graph")]
+    Shared --> CLI[("logscope-triage CLI<br/>Drain3 + 鸿蒙 parser")]
+    Producers --> Wiki[("Wiki<br/>Markdown 知识库")]
+    Wiki --> ATH[("私有向量数据库<br/>RAG 检索 ⏳")]
 ```
