@@ -33,7 +33,7 @@ export default async function ({ agent, phase, log, args }) {
       { agentType: 'wiki-reader', label: 'wiki' }
     )
   } else {
-    log('提示：本仓无 wiki，本次定位无历史经验加持；可先跑 /wiki-doc、/wiki-flow 生成后再定位')
+    log('提示：本仓无 wiki，本次定位无历史经验加持；可先跑 /arch-doc、/flow-doc 生成后再定位')
   }
 
   phase('Trace')
