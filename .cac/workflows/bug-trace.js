@@ -32,6 +32,8 @@ export default async function ({ agent, phase, log, args }) {
       `读 ${wiki} 取预期行为与涉及模块。bug 报告："${report}"。用报告里的符号当信号匹配索引。`,
       { agentType: 'wiki-reader', label: 'wiki' }
     )
+  } else {
+    log('提示：本仓无 wiki，本次定位无历史经验加持；可先跑 /wiki-doc、/wiki-flow 生成后再定位')
   }
 
   phase('Trace')
