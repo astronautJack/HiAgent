@@ -18,9 +18,9 @@
 **Wiki 生产者家族**（共享 wiki 约定，内容各异）：
 | agent | 产出 |
 |---|---|
-| `arch-wiki-writer` | 架构文档（DeepWiki 风，LLM 散文） |
-| `flow-wiki-writer` | 业务流生命周期页 + 错误目录 + error_index |
-| `exp-wiki-writer` | 经验案例页 + 索引 |
+| `arch-writer` | 架构文档（DeepWiki 风，LLM 散文） |
+| `flow-writer` | 业务流生命周期页 + 错误目录 + error_index |
+| `exp-writer` | 经验案例页 + 索引 |
 
 **feature 实现流水线**（顺序链）：
 | agent | 阶段 |
@@ -38,10 +38,10 @@
 | `diag` | log-parser → wiki-reader → code-tracer → critic 循环 → 报告 |
 | `bug-trace` | wiki-reader → code-tracer → 报告 |
 | `feature-design` | feature-planner → 设计交人审 |
-| `wiki-map` | code-graph（build+wiki 子命令+sync 到目标目录） |
-| `wiki-doc` | code-graph（build+wiki）→ arch-wiki-writer 写架构文档 |
-| `wiki-flow` | flow-wiki-writer（沿 CRG flows 写业务流页 + error_index） |
-| `exp-archive` | exp-wiki-writer（写案例页 + 索引） |
+| `graph-sync` | code-graph（build+wiki 子命令+sync 到目标目录） |
+| `arch-doc` | code-graph（build+wiki）→ arch-writer 写架构文档 |
+| `flow-doc` | flow-writer（沿 CRG flows 写业务流页 + error_index） |
+| `exp-archive` | exp-writer（写案例页 + 索引） |
 | `exp-search` | wiki-reader（查索引 + 全文匹配） |
 
 ## Wiki 约定（所有 wiki 生产者遵循）
@@ -68,7 +68,7 @@ last_sync_commit: <git -C <repo> rev-parse HEAD>
 
 ## 共享预检：CRG 新鲜度门
 
-启动 `diag` / `bug-trace` / `feature-design` / `wiki-flow` 前会话先确认 CRG 图新鲜：
+启动 `diag` / `bug-trace` / `feature-design` / `flow-doc` 前会话先确认 CRG 图新鲜：
 1. `Bash(code-review-graph status --repo <repo>)` 判新鲜。
 2. 缺/过时 → 问用户三选一，问询文本须写清后果：
    - **build**：建图（首次/图库损坏）
@@ -76,7 +76,7 @@ last_sync_commit: <git -C <repo> rev-parse HEAD>
    - **不跑**：放弃本次定位（不建图，workflow 不启动）
 3. 用户选定后刷新图，再启动 workflow。
 
-`wiki-map` / `wiki-doc` 自己会建图，不额外检查。
+`graph-sync` / `arch-doc` 自己会建图，不额外检查。
 
 ## 人审 checkpoint 是 workflow 边界
 

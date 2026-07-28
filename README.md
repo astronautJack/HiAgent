@@ -7,9 +7,9 @@
 ```mermaid
 flowchart TB
     Sess["用户 / Claude Code 会话"] --> Entry["智能路由 entry.js"]
-    Entry --> WFs["用例 workflow（8）<br/>━━━━━━━━━━━━<br/>分析定位：diag · bug-trace · feature-design<br/>wiki 生成：wiki-map · wiki-doc · wiki-flow<br/>经验：exp-archive · exp-search"]
+    Entry --> WFs["用例 workflow（8）<br/>━━━━━━━━━━━━<br/>分析定位：diag · bug-trace · feature-design<br/>wiki 生成：graph-sync · arch-doc · flow-doc<br/>经验：exp-archive · exp-search"]
     WFs --> Shared["共享能力（4）<br/>code-graph · wiki-reader<br/>code-tracer · log-parser"]
-    WFs --> Producers["Wiki 生产者（3）<br/>arch · flow · exp-wiki-writer"]
+    WFs --> Producers["Wiki 生产者（3）<br/>arch · flow · exp-writer"]
     WFs --> Pipeline["feature 流水线（4）<br/>planner · coder · reviewer · tester"]
     Shared --> CRG[("CRG<br/>code-review-graph")]
     Shared --> CLI[("logscope-triage CLI<br/>Drain3 + 鸿蒙 parser")]
@@ -41,7 +41,7 @@ Claude Code 的 workflow 把编排逻辑写成 JS 脚本后台跑，相比用 ag
 
 1. 学习门槛高 → `entry` 路由按意图自动分发，不用记每个用法
 2. 能力重复 → code-tracer / wiki-reader / code-graph 跨用例复用，不复制
-3. 经验不沉淀 → exp-wiki-writer 归档 + wiki-reader 检索
+3. 经验不沉淀 → exp-writer 归档 + wiki-reader 检索
 
 ## 两层架构
 
@@ -50,7 +50,7 @@ Claude Code 的 workflow 把编排逻辑写成 JS 脚本后台跑，相比用 ag
   code-graph · wiki-reader · code-tracer · log-parser
 
 第 2 层：专职 subagent（各被特定 workflow 调）
-  Wiki 生产者：arch-wiki-writer · flow-wiki-writer · exp-wiki-writer
+  Wiki 生产者：arch-writer · flow-writer · exp-writer
   feature 流水线：feature-planner · feature-coder · feature-reviewer · feature-tester
 ```
 
@@ -150,8 +150,8 @@ claude
 | 日志报错定位 | `diag` |
 | bug 报告定位（非日志） | `bug-trace` |
 | 需求→设计 | `feature-design` |
-| 生成结构 wiki | `wiki-map` |
-| 生成架构文档 | `wiki-doc` |
-| 生成业务流 wiki | `wiki-flow` |
+| 生成结构 wiki | `graph-sync` |
+| 生成架构文档 | `arch-doc` |
+| 生成业务流 wiki | `flow-doc` |
 | 归档案例 | `exp-archive` |
 | 检索历史经验 | `exp-search` |

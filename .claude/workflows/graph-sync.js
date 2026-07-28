@@ -1,6 +1,6 @@
-// wiki-map — 生成 CRG 结构 wiki：code-graph 建图 + wiki 子命令 + sync 到目标目录（纯结构，无 LLM 介入）
+// graph-sync — 生成 CRG 结构 wiki：code-graph 建图 + wiki 子命令 + sync 到目标目录（纯结构，无 LLM 介入）
 export const meta = {
-  name: 'wiki-map',
+  name: 'graph-sync',
   description: '生成 CRG 结构 wiki（纯结构，快）',
   whenToUse: '用户要生成/刷新代码仓结构 wiki。传 args {repo, wikiPath?}。',
   phases: [

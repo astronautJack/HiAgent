@@ -20,7 +20,7 @@ tools: Read, Bash, Glob
 6. **freshness 判定**：`status` 的 `Built at commit` 与 `git -C <repo> rev-parse HEAD` 比；`detect-changes --brief` 印证。返回新鲜/缺失/过时。
 7. **visualize**：`code-review-graph visualize --repo <repo> --format <fmt>`，fmt = `json`/`graphml`/`svg`/`obsidian`/`cypher`(Neo4j)。
 8. **wiki 子命令**：`code-review-graph wiki --repo <repo>` 生成纯结构页（Overview/Members/Flows/Dependencies，不调 LLM）到 `<repo>/.code-review-graph/wiki/`。
-9. **wiki-map sync**：把 `<repo>/.code-review-graph/wiki/` 下的结构页同步到目标 `<wikiPath>`。覆盖前 Read 检查既有文件（diff 交人审）。用 Bash `cp` 拷贝。结构页是 CRG 纯结构产物，无 LLM 介入。
+9. **graph-sync sync**：把 `<repo>/.code-review-graph/wiki/` 下的结构页同步到目标 `<wikiPath>`。覆盖前 Read 检查既有文件（diff 交人审）。用 Bash `cp` 拷贝。结构页是 CRG 纯结构产物，无 LLM 介入。
 
 ## CRG 完整 CLI 命令面（你掌握，可兜底其他 agent）
 

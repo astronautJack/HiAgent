@@ -58,7 +58,7 @@ export default async function ({ agent, phase, log, args }) {
       { agentType: 'wiki-reader', schema: CONTEXT_SCHEMA, label: 'wiki' }
     )
   } else {
-    log('提示：本仓无 flow-wiki（error_index），本次定位无历史经验加持；可先跑 /wiki-flow 生成后再定位')
+    log('提示：本仓无业务流页（error_index），本次定位无历史经验加持；可先跑 /flow-doc 生成后再定位')
   }
 
   let trace = null
