@@ -10,7 +10,7 @@ tools: Read, Grep, Bash, Glob
 
 ## 任务
 
-输入：`<wiki>`（wiki 根目录）、`<signals>`（错误信号 / 关键词 / 符号，来自 log digest 或 bug 报告或需求）。
+输入：`<wiki>`（wiki 根目录）、`<signals>`（错误信号 / 关键词 / 符号，来自 log digest 或 bug 报告或需求）、`<repo>`（可选，验经验 case 过期用）。
 
 **原则：索引入上下文，全页留盘按需取——绝不把所有 wiki 页灌进来。**
 
@@ -21,6 +21,17 @@ tools: Read, Grep, Bash, Glob
    - 还需调用链上下文 → Read `<wiki>/<page_id>.md`，只看相关段。
 4. **无 wiki 或未命中**：返 null（调用方退回源码）。
 5. 输出：命中摘要（调用链 + 错误目录条目 + source_paths 锚点，≤300 行）。
+
+## 过期检测（当下代码赢过历史 case）
+
+读到经验案例页（`cases/*.md`）时先验过期——案例写的证据 file:line 可能已不匹配当前代码（Thinkroom 第一道防线：当下代码赢过历史文档）：
+
+1. 从 frontmatter 取 `source_commit` + `evidence`（或 `source_paths`）。
+2. `Bash(git -C <repo> diff <source_commit>..HEAD --name-only -- <evidence 涉及的文件>)`。
+3. 输出非空 → 证据文件自 case 写后已变，case **可能过期**：不当 ground truth 注入；返回时标 `stale: true` + 列出哪些文件变了，让调用方（code-tracer）知重不轻信。
+4. 输出空 → case 证据仍匹配当前代码，正常注入。
+
+无 `source_commit` 的老 case → 当 stale 处理（无法验，保守）。
 
 ## CRG MCP 工具（兜底，符号定位时可选）
 
