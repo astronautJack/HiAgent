@@ -9,6 +9,9 @@ dist/
 build/
 *.egg-info/
 
+# 测试样本（日志/wiki 样例，本地保留不入仓）
+tools/test/
+
 # 经验 wiki 产物
 cases/
 *.log
