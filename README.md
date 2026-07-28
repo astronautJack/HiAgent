@@ -145,7 +145,7 @@ claude
 
 ```mermaid
 flowchart TB
-    Sess["用户 / CodeAgent 会话"] --> Entry["智能路由 entry.js"]
+    Sess["用户 / Claude Code 会话"] --> Entry["智能路由 entry.js"]
     Entry --> WFs["用例 workflow（8）<br/>━━━━━━━━━━━━<br/>分析定位：diag · bug-trace · feature-design<br/>wiki 生成：wiki-map · wiki-doc · wiki-flow<br/>经验：exp-archive · exp-search"]
     WFs --> Shared["共享能力（4）<br/>code-graph · wiki-reader<br/>code-tracer · log-parser"]
     WFs --> Producers["Wiki 生产者（3）<br/>arch · flow · exp-wiki-writer"]
