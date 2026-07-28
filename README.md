@@ -66,13 +66,30 @@ HiAgent/
 ## 安装
 
 ```bash
-git clone <本仓地址> HiAgent && cd HiAgent
+# 1. 拿到本仓（只 clone codeagent 分支）
+git clone -b codeagent https://github.com/astronautJack/HiAgent.git HiAgent && cd HiAgent
+
+# 2. 装 uv（CRG + logscope-triage 用）
 curl -LsSf https://astral.sh/install.sh | sh
+
+# 3. 装 CRG（代码图）
 uv tool install code-review-graph
+
+# 4. 装 logscope-triage CLI（本仓 Python CLI）
 cd tools && uv tool install . && cd ..
-export PATH="$HOME/.local/bin:$PATH"
+
+# 5. 确保 ~/.local/bin 在 PATH
+export PATH="$HOME/.local/bin:$PATH"   # 永久：写进 ~/.bashrc
+
+# 6. 验证
+code-review-graph --version            # 应出版本号
+logscope-triage --help                 # 应有 --json / --log-format
+
+# 7. 启动 CodeAgent（加载 .cac/ + AGENTS.md）
 codeagent
 ```
+
+装完重启 CodeAgent 让 `settings.json` 的 CRG MCP 生效。改完 `.cac/` 或 `settings.json` 后也要重启。
 
 ## 使用说明
 
