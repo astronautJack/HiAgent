@@ -65,6 +65,8 @@ HiAgent/
 
 ## 安装
 
+### Linux / macOS
+
 ```bash
 # 1. 拿到本仓（只 clone codeagent 分支）
 git clone -b codeagent https://github.com/astronautJack/HiAgent.git HiAgent && cd HiAgent
@@ -78,8 +80,34 @@ uv tool install code-review-graph
 # 4. 装 logscope-triage CLI（本仓 Python CLI）
 cd tools && uv tool install . && cd ..
 
-# 5. 确保 ~/.local/bin 在 PATH
+# 5. 确保 ~/.local/bin 在 PATH（uv 安装器通常已加）
 export PATH="$HOME/.local/bin:$PATH"   # 永久：写进 ~/.bashrc
+
+# 6. 验证
+code-review-graph --version            # 应出版本号
+logscope-triage --help                 # 应有 --json / --log-format
+
+# 7. 启动 CodeAgent（加载 .cac/ + AGENTS.md）
+codeagent
+```
+
+### Windows（PowerShell）
+
+```powershell
+# 1. 拿到本仓（只 clone codeagent 分支）
+git clone -b codeagent https://github.com/astronautJack/HiAgent.git HiAgent; cd HiAgent
+
+# 2. 装 uv（CRG + logscope-triage 用）
+irm https://astral.sh/install.ps1 | iex
+
+# 3. 装 CRG（代码图）
+uv tool install code-review-graph
+
+# 4. 装 logscope-triage CLI（本仓 Python CLI）
+cd tools; uv tool install .; cd ..
+
+# 5. 确保 ~/.local/bin 在 PATH（uv 安装器通常已加；没加则手动加）
+$env:Path += ";$HOME\.local\bin"   # 当前会话；永久：系统环境变量里加 %USERPROFILE%\.local\bin
 
 # 6. 验证
 code-review-graph --version            # 应出版本号
