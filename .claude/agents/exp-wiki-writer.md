@@ -12,9 +12,13 @@ tools: Read, Write, Grep, Bash, Glob
 
 输入：`<wiki>`、`<case_data>`（结构化案例）。
 
-1. 生成 slug `<module>-<type>-<简述>`，Write `<wiki>/cases/<slug>.md`（frontmatter + 问题/根因/证据/修复/相关）。
+1. 生成 slug `<module>-<type>-<简述>`，Write `<wiki>/cases/<slug>.md`（按下模板）。
 2. Read `<wiki>/cases/index.md` → 追加条目 → Write 回去。
 3. 更新 `<wiki>/README.md` 统计。
+
+**案例页 frontmatter**：`id / title / module / type / date / tags / source / related_cases`。
+**案例页章节**：**问题** → **根因** → **证据** → **修复** → **相关**（链接相关 case）。
+**索引表列**：`ID | 标题 | 模块 | 类型 | 日期 | 关键词 | 文件路径`。
 
 ## 检索
 

@@ -18,6 +18,16 @@ tools: Read, Write, Bash
 4. **取证行段回读**：Read 工具（offset/limit 按行读）。
 5. **返回**：`{raw_file, digest, key_lines, claimed_error}`。
 
+## 鸿蒙日志 profile（CLI 内置 parser）
+
+`logscope-triage` 内置鸿蒙三类 parser（agent **不**跑 Bash grep，CLI 解析）：
+- ① **hilog**：`MM-DD HH:MM:SS.mmm PID TID L DOMAIN/TAG: msg`（年/月/日可选、单数字；域任意 hex 前缀）→ 抽 datetime/pid/tid/level/domain/tag/msg；喂 Drain3 的是 message（更干净）。
+- ② **HiSysEvent**：JSON 行，抽 domain/name/type(FAULT)/level/params（`FILE/LINE/CALLER` 金锚点）。
+- ③ **faultlog**：native `#NN pc <hex> /path/lib.so(buildId)` + ArkTS `at func (path:line:col)` + fault 头。
+- **domain→模块**：digest 列 (domain, tag)，code-tracer 用 tag 当符号 Grep 代码仓定位。
+
+`--log-format generic` 跳过鸿蒙 parser，纯 Drain3 喂全行（非鸿蒙日志用）；`auto`/`harmony` = 全开鸿蒙 parser。
+
 ## 约束
 
 - Bash 仅 `logscope-triage *` 与 `git *`；日志解析靠 CLI，文件操作靠 Read/Write。

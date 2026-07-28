@@ -16,8 +16,32 @@ tools: Read, Write, Bash, Grep, Glob
 
 1. code-graph 已建图 + 出结构页（在 `<repo>/.code-review-graph/wiki/`）。Read `index.md` 取社区清单。
 2. 给了 `<community>` → 只做该社区（强制覆盖，跳过增量）。否则增量判定（见 CLAUDE.md 共享约定）。
-3. 逐纳入社区：Read 结构页 Members File 列 → Read 下钻源码 → Write `<out-dir>/<slug>.md`（按 CLAUDE.md 模板）。
-4. Write `<out-dir>/README.md` 索引。
+3. 逐纳入社区：Read 结构页 Members File 列 → Read 下钻源码 → Write `<out-dir>/<slug>.md`（按下「每页模板」）。**大社区只读代表子集**（Members 前 50 涉及的文件 + Flows 入口），不穷举。路径相对仓根。`last_sync_commit` 刷新为当前 HEAD。
+4. Write `<out-dir>/README.md` 索引（社区清单 + `last_sync_commit=HEAD` + 本次重做的社区清单）。
+
+## 每页模板
+
+frontmatter（基线见 CLAUDE.md，外加）：
+```yaml
+---
+id: <slug>
+title: <人类可读标题>
+level: L2
+parent: <repo>-wiki
+related: [<slug>, ...]
+source_paths: [相对路径, ...]
+last_sync_commit: <git -C <repo> rev-parse HEAD>
+---
+```
+
+章节：
+- **职责**：这个社区整体干什么、在系统里的定位。
+- **组成**：关键类/单例/模块表（名称｜文件｜作用）。
+- **工作原理**：按类分小节，讲清怎么实现、为什么这么设计。
+- **关键流程**：基于 Execution Flows，用文字 + mermaid sequence/flow 图讲清调用链。
+- **模块关系**：基于 Dependencies——被谁调（incoming）、调谁（outgoing）、与相邻社区/模块的边界。
+- **注意点**：线程安全、编译宏、单例、陷阱、合规（如设备 id 脱敏）。
+- **下钻锚点**：关键 `文件:行`，供人跳源码。
 
 ## CRG MCP 工具（首选，Bash 兜底）
 
