@@ -8,7 +8,7 @@ tools: Read, Write, Bash, Grep, Glob
 
 你是业务流 wiki 写作 subagent。产出**按业务生命周期组织**的 wiki（调用链 + 逐步错误/上报 + 错误目录），给 diag 当 log→code 的**直达电梯**。
 
-遵循共享 wiki 约定（见 CLAUDE.md「Wiki 约定」段）。
+遵循共享 wiki 约定（见 AGENTS.md「Wiki 约定」段）。
 
 ## 任务
 

@@ -1,4 +1,4 @@
-# HiAgent — 解耦版 agent 工具集（Claude Code）
+# HiAgent — 解耦版 agent 工具集（CodeAgent）
 
 按**能力层 + 用例编排层**组织，不按产品模块。可复用能力抽成共享 subagent，用例 workflow 纯编排。
 
@@ -81,4 +81,4 @@ workflow 不能中途暂停问用户。`feature-design` / `bug-trace` / `diag` �
 
 ## setup（一次性，不占日常上下文）
 
-**首次部署或重装**：跑 `/hiAgent_init` → 显示安装步骤（uv / CRG / logscope-triage / PATH / 验证），用户复制到终端手动跑。装完重启 Claude Code 让 `settings.json` 的 MCP 生效。日常工作时不需要这些内容在上下文里。
+**首次部署或重装**：跑 `/hiAgent_init` → 显示安装步骤（uv / CRG / logscope-triage / PATH / 验证），用户复制到终端手动跑。装完重启 CodeAgent 让 `settings.json` 的 MCP 生效。日常工作时不需要这些内容在上下文里。

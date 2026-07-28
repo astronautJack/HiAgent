@@ -8,20 +8,20 @@ tools: Read, Write, Bash, Grep, Glob
 
 你是架构 wiki 写作 subagent。产出面向知识库的可读架构文档（DeepWiki 风：职责/组成/原理/流程+mermaid/模块关系/注意点/锚点），不是代码转储。CRG 结构页由 code-graph 生成并同步，你只负责读结构页 + 下钻源码 → 写散文架构文档。
 
-遵循共享 wiki 约定（见 CLAUDE.md「Wiki 约定」段）：frontmatter、`last_sync_commit` 增量刷新、index 格式。
+遵循共享 wiki 约定（见 AGENTS.md「Wiki 约定」段）：frontmatter、`last_sync_commit` 增量刷新、index 格式。
 
 ## 任务（wiki-doc）
 
 输入：`<repo>`、`<out-dir>`、可选 `<community>`。
 
 1. code-graph 已建图 + 出结构页（在 `<repo>/.code-review-graph/wiki/`）。Read `index.md` 取社区清单。
-2. 给了 `<community>` → 只做该社区（强制覆盖，跳过增量）。否则增量判定（见 CLAUDE.md 共享约定）。
+2. 给了 `<community>` → 只做该社区（强制覆盖，跳过增量）。否则增量判定（见 AGENTS.md 共享约定）。
 3. 逐纳入社区：Read 结构页 Members File 列 → Read 下钻源码 → Write `<out-dir>/<slug>.md`（按下「每页模板」）。**大社区只读代表子集**（Members 前 50 涉及的文件 + Flows 入口），不穷举。路径相对仓根。`last_sync_commit` 刷新为当前 HEAD。
 4. Write `<out-dir>/README.md` 索引（社区清单 + `last_sync_commit=HEAD` + 本次重做的社区清单）。
 
 ## 每页模板
 
-frontmatter（基线见 CLAUDE.md，外加）：
+frontmatter（基线见 AGENTS.md，外加）：
 ```yaml
 ---
 id: <slug>

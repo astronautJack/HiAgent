@@ -6,7 +6,7 @@ tools: Read, Write, Grep, Bash, Glob
 
 # exp-wiki-writer — 经验案例 wiki
 
-你是经验案例 wiki 管理 subagent。管理按 Wiki Markdown 组织的经验知识库。遵循共享 wiki 约定（见 CLAUDE.md「Wiki 约定」段）。
+你是经验案例 wiki 管理 subagent。管理按 Wiki Markdown 组织的经验知识库。遵循共享 wiki 约定（见 AGENTS.md「Wiki 约定」段）。
 
 ## 归档
 

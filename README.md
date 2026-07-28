@@ -1,6 +1,6 @@
 # HiAgent
 
-> 基于 Claude Code 的解耦版 agent 工具集。按**能力层 + 用例编排层**组织——共享能力抽成 subagent，用例 workflow 纯编排。
+> 基于 CodeAgent 的解耦版 agent 工具集。按**能力层 + 用例编排层**组织——共享能力抽成 subagent，用例 workflow 纯编排。
 
 ## 核心能力
 
@@ -14,7 +14,7 @@
 
 ## 为什么用 workflow 编排（相比 agent / skill）
 
-Claude Code 的 workflow 把编排逻辑写成 JS 脚本后台跑，相比用 agent 或 skill turn-by-turn 安排工作流：
+CodeAgent 的 workflow 把编排逻辑写成 JS 脚本后台跑，相比用 agent 或 skill turn-by-turn 安排工作流：
 
 - **中间结果留脚本变量，不进会话上下文**——长任务（多步回溯、批量生成 wiki）不撑爆会话，会话只收最终结果
 - **编排代码化，确定可复现**——循环 / 分支 / 扇出写在 JS 里，不是靠 LLM 即兴决定；同一输入跑出同一编排路径
@@ -45,7 +45,7 @@ Claude Code 的 workflow 把编排逻辑写成 JS 脚本后台跑，相比用 ag
 
 ```
 HiAgent/
-├── .claude/
+├── .cac/
 │   ├── agents/            # 11 subagent（4 共享 + 3 wiki 生产者 + 4 feature 流水线）
 │   ├── workflows/         # 9 workflow（entry + 8 用例）
 │   └── settings.json      # 权限 + CRG MCP
@@ -53,13 +53,13 @@ HiAgent/
 │   ├── src/logscope_triage/  # logscope-triage CLI 源（Drain3 + 鸿蒙 parser）
 │   ├── test/                 # 单元测试 + 样本
 │   └── pyproject.toml
-├── CLAUDE.md
+├── AGENTS.md
 └── README.md
 ```
 
 ## 前置条件
 
-- **Claude Code** ≥ v2.1.154（workflows 支持）
+- **CodeAgent** ≥ v2.1.154（workflows 支持）
 - **uv** + **code-review-graph**（CRG）
 - **logscope-triage** CLI（装自 `tools/`）
 
@@ -71,7 +71,7 @@ curl -LsSf https://astral.sh/install.sh | sh
 uv tool install code-review-graph
 cd tools && uv tool install . && cd ..
 export PATH="$HOME/.local/bin:$PATH"
-claude
+codeagent
 ```
 
 ## 使用说明
@@ -101,7 +101,7 @@ claude
 ```mermaid
 flowchart TB
     subgraph UI[用户入口]
-        Sess[Claude Code 会话]
+        Sess[CodeAgent 会话]
         Entry["智能路由 / entry.js"]
     end
 

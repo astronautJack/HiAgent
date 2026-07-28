@@ -27,8 +27,8 @@ export PATH="$HOME/.local/bin:$PATH"   # 永久：写进 ~/.bashrc
 code-review-graph --version            # 应出版本号
 logscope-triage --help                 # 应有 --json / --log-format
 
-# 7. 启动 Claude Code
-claude
+# 7. 启动 CodeAgent
+codeagent
 ```
 
-装完重启 Claude Code 让 `settings.json` 的 CRG MCP 生效。改完 `.claude/` 或 `settings.json` 后也要重启。
+装完重启 CodeAgent 让 `settings.json` 的 CRG MCP 生效。改完 `.cac/` 或 `settings.json` 后也要重启。
