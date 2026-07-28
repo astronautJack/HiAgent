@@ -8,8 +8,8 @@ description: 显示 HiAgent 安装步骤（用户手动到终端跑）。
 **HiAgent 安装步骤**（在终端手动跑）：
 
 ```bash
-# 1. 拿到本仓
-git clone <本仓地址> HiAgent && cd HiAgent
+# 1. 拿到本仓（只 clone codeagent 分支）
+git clone -b codeagent https://github.com/astronautJack/HiAgent.git HiAgent && cd HiAgent
 
 # 2. 装 uv（CRG + logscope-triage 用）
 curl -LsSf https://astral.sh/install.sh | sh
