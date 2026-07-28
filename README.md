@@ -1,5 +1,7 @@
 # HiAgent
 
+> CodeAgent 用户请切换到 `codeagent` 分支查看说明。
+
 > 基于 Claude Code 的解耦版 agent 工具集。按**能力层 + 用例编排层**组织——共享能力抽成 subagent，用例 workflow 纯编排。
 
 ```mermaid
