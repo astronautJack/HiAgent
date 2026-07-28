@@ -79,15 +79,6 @@ last_sync_commit: <git -C <repo> rev-parse HEAD>
 
 workflow 不能中途暂停问用户。`feature-design` / `bug-trace` / `diag` 返回报告后会话呈现交人审；批准后才启动 implement/fix workflow（未来加）。
 
-## 安装
+## setup（一次性，不占日常上下文）
 
-```bash
-git clone <本仓地址> HiAgent && cd HiAgent
-curl -LsSf https://astral.sh/install.sh | sh          # uv
-uv tool install code-review-graph                       # CRG
-cd tools && uv tool install . && cd ..                  # logscope-triage CLI
-export PATH="$HOME/.local/bin:$PATH"
-claude
-```
-
-改完 `.claude/` 或 `settings.json` 后**重启**才生效。
+**首次部署或重装**：跑 `/hiAgent_init` → 显示安装步骤（uv / CRG / logscope-triage / PATH / 验证），用户复制到终端手动跑。装完重启 Claude Code 让 `settings.json` 的 MCP 生效。日常工作时不需要这些内容在上下文里。
