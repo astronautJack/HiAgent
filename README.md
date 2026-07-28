@@ -144,41 +144,49 @@ codeagent
 ## 产品结构
 
 ```mermaid
-flowchart TB
+flowchart LR
     subgraph UI[用户入口]
         Sess[CodeAgent 会话]
         Entry["智能路由 / entry.js"]
     end
 
-    subgraph WF[用例 workflow 纯编排]
-        Diag[diag]
-        BugT[bug-trace]
-        FeatD[feature-design]
-        WMap[wiki-map]
-        WDoc[wiki-doc]
-        WFlow[wiki-flow]
-        ExpA[exp-archive]
-        ExpS[exp-search]
+    subgraph WF[用例 workflow]
+        direction TB
+        subgraph WFA[分析定位]
+            Diag[diag]
+            BugT[bug-trace]
+            FeatD[feature-design]
+        end
+        subgraph WFW[wiki 生成]
+            WMap[wiki-map]
+            WDoc[wiki-doc]
+            WFlow[wiki-flow]
+        end
+        subgraph WFE[经验]
+            ExpA[exp-archive]
+            ExpS[exp-search]
+        end
     end
 
-    subgraph CAP[共享能力]
-        CG[code-graph]
-        WR[wiki-reader]
-        CT[code-tracer]
-        LP[log-parser]
-    end
-
-    subgraph PROD[Wiki 生产者]
-        AW[arch-wiki-writer]
-        FW[flow-wiki-writer]
-        EW[exp-wiki-writer]
-    end
-
-    subgraph FEAT[feature 流水线]
-        FP[feature-planner]
-        FC[feature-coder]
-        FR[feature-reviewer]
-        FT[feature-tester]
+    subgraph AGENTS[agents]
+        direction TB
+        subgraph CAP[共享能力]
+            CG[code-graph]
+            WR[wiki-reader]
+            CT[code-tracer]
+            LP[log-parser]
+        end
+        subgraph PROD[Wiki 生产者]
+            AW[arch-wiki-writer]
+            FW[flow-wiki-writer]
+            EW[exp-wiki-writer]
+        end
+        subgraph FEAT[feature 流水线]
+            FP[feature-planner]
+            FC[feature-coder]
+            FR[feature-reviewer]
+            FT[feature-tester]
+        end
     end
 
     Wiki[Wiki<br/>Markdown 知识库]
@@ -186,14 +194,9 @@ flowchart TB
     ATH["私有向量数据库<br/>RAG 检索<br/>⏳ 后续接入"]
 
     Sess --> Entry
-    Entry --> Diag
-    Entry --> BugT
-    Entry --> FeatD
-    Entry --> WMap
-    Entry --> WDoc
-    Entry --> WFlow
-    Entry --> ExpA
-    Entry --> ExpS
+    Entry --> WFA
+    Entry --> WFW
+    Entry --> WFE
 
     Diag --> LP
     Diag --> WR
