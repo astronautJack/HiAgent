@@ -70,8 +70,11 @@ last_sync_commit: <git -C <repo> rev-parse HEAD>
 
 启动 `diag` / `bug-trace` / `feature-design` / `wiki-flow` 前会话先确认 CRG 图新鲜：
 1. `Bash(code-review-graph status --repo <repo>)` 判新鲜。
-2. 缺/过时 → 问用户 build/update/不跑；刷新。
-3. 启动 workflow。
+2. 缺/过时 → 问用户三选一，问询文本须写清后果：
+   - **build**：建图（首次/图库损坏）
+   - **update**：增量更新（图过时，代码已变）
+   - **不跑**：放弃本次定位（不建图，workflow 不启动）
+3. 用户选定后刷新图，再启动 workflow。
 
 `wiki-map` / `wiki-doc` 自己会建图，不额外检查。
 

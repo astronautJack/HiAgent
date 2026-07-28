@@ -57,6 +57,8 @@ export default async function ({ agent, phase, log, args }) {
       `读 ${wiki}/error_index.md 匹配 digest 错误信号。符号：${JSON.stringify(digest.symbols)}；claimed：${digest.claimed_error}。未命中返 null。`,
       { agentType: 'wiki-reader', schema: CONTEXT_SCHEMA, label: 'wiki' }
     )
+  } else {
+    log('提示：本仓无 flow-wiki（error_index），本次定位无历史经验加持；可先跑 /wiki-flow 生成后再定位')
   }
 
   let trace = null
