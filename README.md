@@ -2,6 +2,19 @@
 
 > 基于 CodeAgent 的解耦版 agent 工具集。按**能力层 + 用例编排层**组织——共享能力抽成 subagent，用例 workflow 纯编排。
 
+```mermaid
+flowchart TB
+    Sess["用户 / CodeAgent 会话"] --> Entry["智能路由 entry.js"]
+    Entry --> WFs["用例 workflow（8）<br/>━━━━━━━━━━━━<br/>分析定位：diag · bug-trace · feature-design<br/>wiki 生成：wiki-map · wiki-doc · wiki-flow<br/>经验：exp-archive · exp-search"]
+    WFs --> Shared["共享能力（4）<br/>code-graph · wiki-reader<br/>code-tracer · log-parser"]
+    WFs --> Producers["Wiki 生产者（3）<br/>arch · flow · exp-wiki-writer"]
+    WFs --> Pipeline["feature 流水线（4）<br/>planner · coder · reviewer · tester"]
+    Shared --> CRG[("CRG<br/>code-review-graph")]
+    Shared --> CLI[("logscope-triage CLI<br/>Drain3 + 鸿蒙 parser")]
+    Producers --> Wiki[("Wiki<br/>Markdown 知识库")]
+    Wiki --> ATH[("私有向量数据库<br/>RAG 检索 ⏳")]
+```
+
 ## 核心能力
 
 **1. 日志定位——丢日志进去，出代码行**
@@ -140,18 +153,3 @@ codeagent
 | 生成业务流 wiki | `wiki-flow` |
 | 归档案例 | `exp-archive` |
 | 检索历史经验 | `exp-search` |
-
-## 产品结构
-
-```mermaid
-flowchart TB
-    Sess["用户 / CodeAgent 会话"] --> Entry["智能路由 entry.js"]
-    Entry --> WFs["用例 workflow（8）<br/>━━━━━━━━━━━━<br/>分析定位：diag · bug-trace · feature-design<br/>wiki 生成：wiki-map · wiki-doc · wiki-flow<br/>经验：exp-archive · exp-search"]
-    WFs --> Shared["共享能力（4）<br/>code-graph · wiki-reader<br/>code-tracer · log-parser"]
-    WFs --> Producers["Wiki 生产者（3）<br/>arch · flow · exp-wiki-writer"]
-    WFs --> Pipeline["feature 流水线（4）<br/>planner · coder · reviewer · tester"]
-    Shared --> CRG[("CRG<br/>code-review-graph")]
-    Shared --> CLI[("logscope-triage CLI<br/>Drain3 + 鸿蒙 parser")]
-    Producers --> Wiki[("Wiki<br/>Markdown 知识库")]
-    Wiki --> ATH[("私有向量数据库<br/>RAG 检索 ⏳")]
-```
