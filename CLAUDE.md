@@ -8,7 +8,7 @@
 
 | agent | 职责 | tools |
 |---|---|---|
-| `code-graph` | CRG 管理：build/update/status/freshness/visualize/wiki 子命令（贵的图操作集中） | Read, Bash, Glob |
+| `code-graph` | CRG 管理：build/update/status/freshness/visualize/wiki 子命令 + 结构页 sync（贵的图操作集中） | Read, Bash, Glob |
 | `wiki-reader` | 读 wiki 索引 + 按信号匹配 + 按需取页（所有需 wiki 上下文的用例共用） | Read, Grep, Bash, Glob |
 | `code-tracer` | 反向回溯定位根因（输入=症状，log 派生或 bug 报告派生都行；diag 和 bug-trace 共用） | Read, Grep, Bash, Glob |
 | `log-parser` | logscope-triage CLI 包装：长日志→有界 digest | Read, Write, Bash |
@@ -18,7 +18,7 @@
 **Wiki 生产者家族**（共享 wiki 约定，内容各异）：
 | agent | 产出 |
 |---|---|
-| `arch-wiki-writer` | 架构文档（DeepWiki 风）+ 结构页同步 |
+| `arch-wiki-writer` | 架构文档（DeepWiki 风，LLM 散文） |
 | `flow-wiki-writer` | 业务流生命周期页 + 错误目录 + error_index |
 | `exp-wiki-writer` | 经验案例页 + 索引 |
 
@@ -38,7 +38,7 @@
 | `diag` | log-parser → wiki-reader → code-tracer → critic 循环 → 报告 |
 | `bug-trace` | wiki-reader → code-tracer → 报告 |
 | `feature-design` | feature-planner → 设计交人审 |
-| `wiki-map` | code-graph（build+wiki）→ arch-wiki-writer 同步结构页 |
+| `wiki-map` | code-graph（build+wiki 子命令+sync 到目标目录） |
 | `wiki-doc` | code-graph（build+wiki）→ arch-wiki-writer 写架构文档 |
 | `wiki-flow` | flow-wiki-writer（沿 CRG flows 写业务流页 + error_index） |
 | `exp-archive` | exp-wiki-writer（写案例页 + 索引） |
