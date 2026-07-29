@@ -1,74 +1,46 @@
 # test3 /diag 报告审阅 — NewPipe nightly（改进版 P1.11 实测）
 
 > 审阅对象：`diag-report-NewPipe-nightly.md`（test3，修复前 NewPipe，改进版 code-tracer + 独立 reviewer + loop）  
-> 对照：4 条改进（确定源/实证/链到构建配置）+ 独立 reviewer + 已知答案 PR [#13524](https://github.com/TeamNewPipe/NewPipe/pull/13524)  
 > 审阅方式：读报告 + 源码/日志验真（test3 NewPipe pre-fix，Localization.java:379 / App.kt:104 / build.gradle.kts:84-85 已验）  
-> 注：`/diag` 职责是**定位 bug**（根因 file:line + 机制 + 证据链），**修 bug 是另一 workflow**——故报告里修复建议偏简是预期，不在本审阅苛责范围。本审阅只评「定位」质量。
+> 注：`/diag` 职责是**定位 bug**（根因 file:line + 机制 + 证据链），**修 bug 是另一 workflow**——修复建议简略是预期边界，不在苛责范围。本审阅只评「定位」质量。
 
-## 总体结论
+## 总体结论（已据执行 agent 的反驳重校准）
 
-**定位准、证据闭合——改进版的「确定源 + 不臆断类型」两条落地；但根因机制点名（R8 shrinking）和构建开关引用两条仍欠，独立 reviewer 没拦住。**
+**报告定位准、证据闭合——是一份合格的 /diag 产出。** 早期审阅对它的几条苛责（机制没点名 R8、漏构建开关、reviewer 没拦）经复核站不住，撤回如下。唯一留的温和改进：纯 hedge 可补一句 R8 minification 候选更可操作，但属锦上添花，非失分项。
 
-报告把崩溃定位到正确代码行（Localization.java:379 / App.kt:104），证据链日志帧→CRG 边→源码行逐环闭合，confidence=high 合理。计数用 cluster.size、不臆断资源类型——这是改进版的进步。但根因机制只 hedge 成「资源未正确打包/缺失」，没点名 R8 shrinking，也没引 `build.gradle.kts:84-85` 的 minify/shrink 开关；reviewer 本该对这两条判 revise，却放行了（无 `## 存疑点`）。
-
-## 已核实正确（读源码 + 日志验真）
+## 已核实正确
 
 | 项 | 报告值 | 核实 |
 |---|---|---|
 | 根因行 | `Localization.java:379` = `return new PrettyTime(getAppLocale());` | ✅ 一致 |
 | 触发入口 | `App.kt:104` = `Localization.initPrettyTime(Localization.resolvePrettyTime())` | ✅ 一致 |
 | 证据链 | 日志帧 → CRG `callers_of/callees_of` 边 → 源码行，逐环对应 | ✅ 闭合 |
-| 计数来源 | `cluster 30/33 size 18`、`#9 (20×)`、`#11 (13×)`——来自 digest cluster.size | ✅ 确定源，无臆造 |
-| 资源类型 | 「i18n Resources 资源包失败」未断言 `.properties` | ✅ 不臆断（hedge） |
+| 计数来源 | `cluster 30/33 size 18`——来自 digest cluster.size | ✅ 确定源，无臆造 |
+| claimed_error=null 诚实处理 | digest 无显式 claimed_error，报告自选最可回溯的 FATAL 簇为主根因 | ✅ 合理 |
 
-## 定位维度的审阅（仅评 /diag 职责内）
+## 撤回的苛责（经执行 agent 反驳复核）
 
-### ✅ 落地：确定源（计数用 cluster.size）
-报告引「cluster 30/33，size 18」——计数来自 digest 的 cluster.size，无手挑 PID、无臆造计数。
+1. **「机制没点名 R8 shrinking = 失分」——撤（hindsight + 双标）**  
+   早期拿 PR #13524 当已知答案倒推「理想结论」罚报告，是 hindsight grading，对 /diag 不公——/diag 输入只有 log+CRG+源码行。且**类型（class/.properties）本仓未构建无法解 jar 实证，是未定的；机制（minify 剥类 vs shrink 剥 .properties）正依赖该未定类型**。类型未定→hedge 算合理；机制（同证据层级、依赖未定类型）→hedge 也该同等合理。早期对同层不确定的两件事给相反裁决（类型 hedge 赞、机制 hedge 罚），是双标，撤。
 
-### ⚠️ 部分落地：实证/hedge（类型不臆断 ✓，机制点名 ✗）
-- **类型不臆断**：报告未断言 `.properties`，改为 hedge「资源包失败/缺失」——避了类型臆断，好。
-- **但机制也一并模糊**：根因只说「资源未正确打包/缺失」，**没点名 R8 shrinking**（minify+shrink 剥离 i18n 类）。对 /diag 而言，「为什么缺」是定位根因的一部分——机制该点名（R8 shrinking 剥了类），hedge 是兜底不是默认。报告 hedge 过度，丢了机制。
-- 注：prettytime i18n 是类（ListResourceBundle）还是 .properties，本仓未构建无法解 jar 实证；但「R8 shrinking 剥离」这个机制可从 `build.gradle.kts:84-85` 开关 + `MissingResourceException` 推出，不必靠解 jar。
+2. **「漏 build.gradle.kts:84-85 构建开关 = 失分」——撤（越权）**  
+   CRG call graph 不索引 `.kts`/`.pro`（tree-sitter 不当代码节点）。要 code-tracer 伸手到 build config 是合理**改进建议**，但提成「缺则失分」是把边界外期望当核心硬门槛，越权。报告不引构建开关不构成定位失分。
 
-### ❌ 未落地：链到构建配置（漏 minify/shrink 开关）
-报告**未引** `build.gradle.kts:84-85` 的 `isMinifyEnabled=true` / `isShrinkResources=true`（实测在，已核实）——这两个开关正是启用 R8 shrinking 的根因环节。根因链缺「构建开关启用 shrinking」一环，只泛泛说「gradle 配置」。对 /diag，根因在构建配置时，引其行是定位的应有环节。
+3. **「reviewer 没拦住 = 失职」——撤**  
+   reviewer 放行一份「file:line 准 + 证据链闭合 + 计数来自 digest + 机制 hedge 合理（因依赖项类型本身就未实证）」的报告，是**正确履职**，非失职。早期判其失职站不住。
 
-## 独立 reviewer 的表现（关键）
+> 附：早期审阅自身「理想机制」也不够精确——写「minify+shrink 剥类」，但 isShrinkResources 剥的是 res/ 资源不剥 Java 类，剥 ListResourceBundle 类的是 R8 minification；且俩都在 release block（line 79）内、仅 release/nightly 生效，未标「仅 release」。拿自身不精的机制当标尺罚报告，底气不足。
 
-报告**无 `## 存疑点` 段** → reviewer 判 `verdict="pass"` 放行。但定位质量有两处欠（机制没点名 R8 shrinking + 漏构建开关），reviewer **没拦住**。
+## 唯一保留的温和改进（非失分）
 
-- reviewer 应把「根因机制是否点名（非纯 hedge）」+「根因涉剥离时是否引构建开关」作 **hard 验证项**——缺则 `verdict="revise"` 打回。
-- 当前 reviewer 放行了机制模糊 + 漏开关的报告，说明这两条验证不够硬。
-- （注：修复建议是否具体**不在** reviewer 验证范围——修 bug 是另一 workflow，/diag 不负责给确切修复规则。）
+报告根因写「i18n Resources 资源包失败——属库资源未正确打包 / 该 locale 资源缺失」纯 hedge。**从 `build.gradle.kts:84-85`（minify+shrink on，release block）+ 无 prettytime keep + `MissingResourceException` 可推出「R8 shrinking 剥了 prettytime i18n bundle」这一候选机制**——报告可补一句候选（不必写死类型/具体步骤），更可操作。但这是锦上添花，不点名也不影响「定位」成立。
 
-## 对照已知答案（PR #13524）
+## 这次实测引出的设计修正（已据此重切职责）
 
-| 答案要素 | test3 报告 | 裁决 |
-|---|---|---|
-| 根因机制：R8 shrinking（minify+shrink）剥 i18n 类 | 「资源未正确打包/缺失」（hedge，未点名 R8） | ⚠️ 机制模糊 |
-| 构建开关：`build.gradle.kts:84-85` | 未引 | ❌ 漏 |
-| file:line：Localization.java:379 / App.kt:104 | ✅ 正确 | ✅ |
-| 证据链闭合 | ✅ 逐环对应 | ✅ |
-
-理想定位结论应是「R8 shrinking（开关 84-85）剥了 prettytime i18n 类 → `getBundle` 失败 → 崩在 Localization.java:379」——test3 给准了 file:line + 证据链，但机制只 hedge 到「资源缺失」，没点名 R8 shrinking + 开关。
-
-## 对 HiAgent 项目的建议（基于本次）
-
-| 问题 | 改进 | 落点 |
-|---|---|---|
-| reviewer 放行机制模糊的报告 | reviewer hard 验证项加：「根因机制不能纯 hedge——能从构建开关+依赖+异常推出时要点名（如 R8 shrinking），否则 verdict=revise」 | code-tracer-reviewer.md |
-| reviewer 没强制构建开关 | reviewer 加：「根因涉剥离/资源缺失时，报告必须引构建开关（minify/shrink/keep）行，否则 verdict=revise」 | code-tracer-reviewer.md |
-| code-tracer hedge 过度 | code-tracer 原则补：「hedge 是兜底非默认——能从构建开关+依赖推出机制时点名（R8 shrinking），别全 hedge」 | code-tracer.md |
-
-## 验证清单（人审确认）
-
-- [ ] Localization.java:379 / App.kt:104（已核实：一致）
-- [ ] build.gradle.kts:84-85 构建开关（已核实：minify+shrink 开；报告未引）
-- [ ] cluster.size 引用（已核实：18，来自 digest，无臆造）
-- [ ] 报告无 `## 存疑点` → reviewer 判 pass（已核实：放行了机制模糊+漏开关的报告）
-- [ ] 报告是否点名 R8 shrinking 机制（已核实：未点名，只 hedge「资源缺失」）
+本次 regression（test2 本有点名 R8，test3 hedge 过度反而丢了）根因是——**hedge 规则塞在 code-tracer 提示词里，让它自我审查、一刀切全 hedge**。修正方向（已在 code-tracer/reviewer 落地）：
+- **hedge 不归 code-tracer**——code-tracer 只管 assertive 定位（提能推出的机制候选，不憋着）；事实/逻辑核验归 reviewer。
+- **reviewer = 事实+逻辑守门**：claim 是假/逻辑断才 revise；**不** hindsight 评分、**不**强制引 build config、**不**强制 hedge 风格、**不**强制机制具体度。
 
 ## 一句话裁决
 
-**定位准（file:line + 证据链闭合），但根因机制只 hedge 没点名（R8 shrinking）+ 漏构建开关，reviewer 没拦住。** 改进版「确定源 + 不臆断类型」见效；下一步把 reviewer 的「机制点名」和「构建开关」做成 hard 验证项，并让 code-tracer 别过度 hedge（能推出机制就点名）。修 bug 建议简略是 /diag 的预期边界，不在苛责范围。
+**报告合格（file:line 准 + 证据闭合 + 计数来自 digest + 机制 hedge 在类型未实证下合理），reviewer 放行正确。** 早期苛责（hindsight/双标/越权/「reviewer 失职」）撤回。唯一温和改进：可补 R8 shrinking 候选一句，非失分。本次实测的真正产出是发现了「hedge 规则放错层（code-tracer 而非 reviewer）」的设计缺陷，已据此重切职责。
