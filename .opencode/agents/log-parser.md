@@ -34,6 +34,15 @@ permission:
 
 `--log-format generic` 跳过鸿蒙 parser，纯 Drain3 喂全行（非鸿蒙日志用）；`auto`/`harmony` = 全开鸿蒙 parser。
 
+## 模板样式集中配置（一处调参，不动源码）
+
+`logscope-triage` 的模板行为集中在 `~/.logscope/config.json`（首跑自动写默认）：
+- `drain3`：`sim_th`（聚类松严，高=少簇严、低=多簇松）、`depth`、`max_children`、`max_clusters`、`extra_delimiters`、`parametrize_numeric_tokens`、`mask_prefix/suffix`
+- `error_keywords`：claimed_error 兜底关键词列表
+- `profile_dir`：模板库目录、`top_default`：默认输出簇数
+
+辅助命令：`logscope-triage --init-config`（写默认模板供编辑）、`logscope-triage --show-config`（看生效值）、`--config <path>`（用别的 config）。需调模板样式时让用户改这个文件，不碰源码。
+
 ## 约束
 
 - Bash 仅 `logscope-triage *` 与 `git *`；日志解析靠 CLI，文件操作靠 Read/Write。
