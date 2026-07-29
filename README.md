@@ -47,13 +47,19 @@ testN/
 ├── codebase/                  # 修复前的开源仓（bug 在）
 ├── log/                       # 真实 crash log
 ├── .opencode/                 # /diag 配置（agents + commands）
-├── opencode.json              # 权限隔离（external_directory:deny）
+├── opencode.json              # 权限隔离（禁外部目录 + 禁联网）
 ├── diag-report-*.md           # code-tracer 产出的定位报告
 └── diag-report-*-审阅.md       # 审阅者验真 + 评定位质量
 ```
 
 ### 验真口径
 审阅者遵循「**事实 + 逻辑守门**」：核对报告每个 `file:line` claim 对源码是否为真、证据链（日志帧 → CRG 边 → 源码行）是否闭合、根因机制逻辑是否成立。claim 假或逻辑断才判 revise；不搞 hindsight 评分、不强制 hedge 风格、不把边界外期望当核心门槛。
+
+### 隔离与防作弊（禁外部目录 + 禁联网）
+`opencode.json` 关掉两条权限：**`external_directory:deny`**（code-tracer/reviewer 只能读 `testN/` 内的 codebase + log，读不到仓外任何文件）+ **网络搜索禁用**（不能联网查 PR/issue）。目的是防 `/diag` 直接读到答案——已知答案 PR 只给**审阅者**对照用，执行 agent 手上只有 log + CRG 图 + 本仓源码，必须真靠回溯定位，不能偷看修复 PR 抄结论。
+
+### 无 wiki 测试（仅 CRG 图）
+这些 test **不建 wiki、不走 `wiki-reader` 步**，`/diag` 编排里只跑 `log-parser → code-tracer → reviewer`，知识来源只有 **CRG 代码调用图**。意图是**隔离考验最难那段**——纯靠调用图反向回溯 + 日志 triage 定位根因，不靠 wiki 预存经验兜底。wiki 辅助路径（`exp-search` 命中旧经验、`flow-doc` 业务流页）留待有 wiki 积累后再验。
 
 ---
 
