@@ -16,6 +16,10 @@ tools/test/
 cases/
 *.log
 
+# test 分支：.opencode 是 opencode 分支配置快照，不跟踪
+# 按需重建：git archive refs/heads/opencode -- .opencode/ | tar -x -C testN/
+.opencode/
+
 # 编辑器
 .vscode/
 .idea/
