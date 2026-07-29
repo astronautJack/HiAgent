@@ -10,7 +10,9 @@
       "uv tool upgrade *": "allow",
       "uvx code-review-graph *": "allow"
     },
-    "external_directory": "deny"
+    "external_directory": "deny",
+    "webfetch": "deny",
+    "websearch": "deny"
   },
   "mcp": {
     "crg": {
