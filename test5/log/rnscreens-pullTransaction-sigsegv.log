@@ -1,0 +1,15 @@
+# 来源：leon-zym/plogkit issue #54（https://github.com/leon-zym/plogkit/issues/54）
+# 同签名 issue：software-mansion/react-native-screens #4151
+# 环境：Android 16 arm64 emulator，React Native 0.86.0 / Expo SDK 57，Fabric（New Architecture），Hermes
+# 触发：app 进程 stop→launch 循环（surface 切换）；崩溃在进程启动约 8s 后，mqt_v_js 线程
+# 注：截断摘录——issue 自述「前 22 个 native frame 无 app 自有符号」；全 tombstone 在 reporter 本机未公开
+Fatal signal 11 (SIGSEGV), code 2 (SEGV_ACCERR), fault addr 0xe500000009 in tid <mqt_v_js>
+signal 11 (SIGSEGV), code 2 (SEGV_ACCERR), fault addr 0xe500000009
+Cause: trying to execute non-executable memory.
+backtrace:
+  #00 pc 0x...  [anon:scudo:primary]
+  #01 pc 0x...  libreactnative.so  (facebook::react::MountingCoordinator::pullTransaction(bool) const+524)
+  #02 pc 0x...  libreactnative.so  (facebook::react::FabricUIManagerBinding::schedulerDidFinishTransaction(...)+72)
+  #03 pc 0x...  libreactnative.so  (facebook::react::Scheduler::uiManagerDidFinishTransaction(...)+100)
+  #04 pc 0x...  libreactnative.so  (facebook::react::UIManager::shadowTreeDidFinishTransaction(...)+116)
+  #05 pc 0x...  libreactnative.so  (facebook::react::ShadowTree::mount(...)+144)

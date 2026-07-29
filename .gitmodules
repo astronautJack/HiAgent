@@ -1,0 +1,6 @@
+[submodule "test5/codebase/react-native"]
+	url = https://github.com/facebook/react-native.git
+	path = test5/codebase/react-native
+[submodule "test5/codebase/react-native-screens"]
+	url = https://github.com/software-mansion/react-native-screens.git
+	path = test5/codebase/react-native-screens
