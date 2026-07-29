@@ -1,6 +1,6 @@
 [project]
 name = "logscope-triage"
-version = "0.3.0"
+version = "0.4.0"
 description = "LogScope 日志分流 CLI：Drain3 通用模板挖掘 + 跨 run 持久化 + --json 机读输出，跨平台无平台专用 parser"
 dependencies = ["drain3>=0.9.0,<1.0"]
 requires-python = ">=3.10"
