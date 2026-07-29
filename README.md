@@ -1,6 +1,6 @@
-# HiAgent — 测试设计与结果汇报（test 分支）
+# HiAgent — `/diag` 测试设计与结果（test 分支）
 
-> 本分支（`test`）是 HiAgent 的**测试产物分支**：只存测试过程与结果，不同步 `.opencode/` 配置改进（改进落在 `main` / `codeagent` / `opencode` 三个 dev 分支）。本 README 是今日工作汇报，供 mentor 直接审阅。
+> 本分支（`test`）是 HiAgent 的**测试产物分支**：只存测试过程与结果，不同步 `.opencode/` 配置改进（改进落在 `main` / `codeagent` / `opencode` 三个 dev 分支）。本 README 记录测试设计、结果与据此做的改进。
 
 ---
 
@@ -12,12 +12,12 @@ HiAgent 是基于 OpenCode 的解耦版 agent 工具集，按「共享能力层 
 
 ---
 
-## 二、今日改进：code-tracer 与 reviewer 职责重切
+## 二、改进：code-tracer 与 reviewer 职责重切
 
-### 发现的问题（test3 实测暴露）
-test3 跑出新 regression：改进版的 code-tracer 把根因机制全 hedge 成「资源包失败」，丢了上一版能点名的「R8 shrinking 剥了 i18n bundle」。根因诊断：
+### 发现的问题（test3 实测）
+test3 中 code-tracer 把根因机制过度 hedge（本可点名的 R8 shrinking 剥离 i18n bundle，被 hedge 成泛泛「资源包失败」），定位变浅。根因诊断：
 - **hedge / 自我审查规则塞在了 code-tracer 提示词里**，让它一刀切全 hedge 求稳；
-- **reviewer 提示词里混进了 hindsight 评分、双标、越权**（把「引构建配置」提成硬门槛）等**审阅者个人复盘话**，导致 reviewer 越权苛责一份本合格的报告。
+- **reviewer 提示词里混进了 hindsight 评分、双标、越权**（把「引构建配置」提成硬门槛）等**审阅者个人复盘话**，守门越界。
 
 ### 改进内容（重切职责边界）
 
@@ -69,8 +69,8 @@ testN/
 - **case**：NewPipe nightly 启动即崩（`MissingResourceException: Can't find bundle ... prettytime.i18n.Resources`）
 - **code-tracer 定位**：根因 `Localization.java:379`（`return new PrettyTime(getAppLocale())`）+ 触发入口 `App.kt:104`（`initPrettyTime(resolvePrettyTime())`）；证据链日志帧 → CRG `callers_of resolvePrettyTime` → 源码行闭合；confidence=high
 - **已知答案**：PR [#13524](https://github.com/TeamNewPipe/NewPipe/pull/13524)
-- **审阅结论**：报告合格（file:line 准 + 证据闭合 + 计数来自 digest）。早期苛责（机制没点名 R8 / 漏构建开关 / reviewer 没拦 = 失职）经复核**站不住，全部撤回**——拿已知答案倒推罚报告是 hindsight grading，且机制依赖的「类型（class/.properties）」本仓未构建无法实证、是未定的，hedge 合理。留 1 温和改进（可补一句 R8 候选，非失分）。
-- **本次实测的真正产出**：发现「hedge 规则放错层（code-tracer 而非 reviewer）」的设计缺陷 → 直接引出上面的职责重切。
+- **审阅结论**：报告合格（file:line 准 + 证据闭合 + 计数来自 digest）。机制 hedge（未点名 R8）不构成失分——根因类型（prettytime i18n 是 class 还是 `.properties`）本仓未构建、无法解 jar 实证，属未定；在未定前提下 hedge 合理。留 1 温和改进（可补一句 R8 shrinking 候选，非失分）。
+- **实测产出**：暴露「hedge 规则放错层（code-tracer 而非 reviewer）」的设计缺陷 → 引出上面的职责重切。
 
 ### test4 — commons-app #6433 旋转崩溃（重切后首测）
 - **case**：旋转屏后点暂停上传即崩（`UninitializedPropertyAccessException: lateinit property pendingUploadsPresenter has not been initialized`）
@@ -89,7 +89,7 @@ testN/
 | 维度 | test3（重切前） | test4（重切后） |
 |---|---|---|
 | code-tracer 定位 | 准，但机制过度 hedge（丢 R8） | 准，且机制深（孤儿实例四环） |
-| reviewer 守门 | 越权苛责（hindsight / 双标 / 越权），后被撤回 | 边界清晰（事实 + 逻辑），放行正确 |
+| reviewer 守门 | 提示词混入 hindsight/双标/越权等个人复盘话，守门越界 | 只守事实 + 逻辑，放行正确 |
 
 职责重切解决了 test3 暴露的问题：hedge / 自我审查移出 code-tracer（它只管 assertive 定位），reviewer 只守事实 + 逻辑、不再越权苛责。test4 首测证明重切后**定位质量**与 **reviewer 守门边界**均达标。
 
@@ -107,7 +107,7 @@ testN/
 其他不足：
 - **样本量小**：仅 2 个 case（test1/test2 已删，方法不成熟故弃）。
 - **格式单一**：两个都是 Android logcat，未测通用文本日志。
-- **审阅同源**：审阅者与 code-tracer 是同一 LLM，可能有同源盲区；且对照已知答案 PR 有 hindsight 风险（test3 审阅已暴露并撤回苛责）。
+- **审阅同源**：审阅者与 code-tracer 是同一 LLM，可能有同源盲区；且对照已知答案 PR 有 hindsight 风险。
 - **未跑真实回归**：test4 codebase 是修复前快照，但未在修复后 codebase 上复跑确认「定位消失」，仅靠 PR 对照，非闭环。
 
 **下一步可补**：找一个「问题难 + 原始长日志」的 case（如服务端通用文本日志 + 跨多文件根因），同时考验 triage 与回溯深度。
