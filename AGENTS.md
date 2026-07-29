@@ -10,7 +10,8 @@
 |---|---|---|
 | `code-graph` | CRG 管理：build/update/status/freshness/visualize/wiki 子命令 + 结构页 sync（贵的图操作集中） | Read, Bash, Glob |
 | `wiki-reader` | 读 wiki 索引 + 按信号匹配 + 按需取页（所有需 wiki 上下文的用例共用） | Read, Grep, Bash, Glob |
-| `code-tracer` | 反向回溯定位根因（输入=症状，log 派生或 bug 报告派生都行；diag 和 bug-trace 共用） | Read, Grep, Bash, Glob |
+| `code-tracer` | 反向回溯定位根因（输入=症状，log 派生或 bug 报告派生都行；diag 和 bug-trace 共用）；**写报告文件交 reviewer 审**，不自审 | Read, Grep, Bash, Glob, Edit |
+| `code-tracer-reviewer` | 独立审阅 code-tracer 报告：重跑 CRG/grep + 重读源码 + 对 digest 验计数 + 验修复可 apply，返 verdict。验证能力同 code-tracer，但 edit:deny 禁改报告（强制分离，防自审自圆其说） | Read, Grep, Bash, Glob |
 | `log-parser` | logscope-triage CLI 包装：长日志→有界 digest | Read, Write, Bash |
 
 ### 第 2 层：专职 subagent（各被特定 command 调）
@@ -37,7 +38,7 @@
 | 命令 | 编排 | 模式 |
 |---|---|---|
 | `/entry` | 路由：分类意图 → 建议对应命令 | 主会话 |
-| `/diag` | log-parser → wiki-reader → code-tracer → critic 循环 → 报告 | subtask |
+| `/diag` | log-parser → wiki-reader → **code-tracer 写报告 → reviewer 独立审 → loop 最多 3 次 → 存疑点** → 报告 | subtask |
 | `/bug-trace` | wiki-reader → code-tracer → 报告 | subtask |
 | `/feature-design` | feature-planner → 设计交人审 | agent:feature-planner |
 | `/graph-sync` | code-graph（build+wiki 子命令+sync） | agent:code-graph |
@@ -82,7 +83,7 @@ last_sync_commit: <git -C <repo> rev-parse HEAD>
 
 ## 人审 checkpoint 是 command 边界
 
-`/feature-design` / `/bug-trace` / `/diag` 返回报告后交主会话呈现人审；批准后才进 implement/fix（未来加）。`subtask:true` 的命令在子会话跑完只返最终报告，中间步骤不污染主上下文。
+`/feature-design` / `/bug-trace` / `/diag` 返回报告后交主会话呈现人审；批准后才进 implement/fix（未来加）。`/diag` 用「code-tracer 写报告 + 独立 reviewer 审」双 agent loop（最多 3 次），防 code-tracer 自审自圆其说；max loop 未共识则在报告末尾加 `## 存疑点` 段。`subtask:true` 的命令在子会话跑完只返最终报告，中间步骤不污染主上下文。
 
 ## setup（一次性，不占日常上下文）
 
