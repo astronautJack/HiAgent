@@ -1,7 +1,13 @@
 ---
-name: feature-coder
 description: 实现 subagent。按设计与 repo 约定写代码，不提交。
-tools: Read, Write, Edit, Bash, Grep, Glob
+mode: subagent
+permission:
+  read: allow
+  edit: allow
+  glob: allow
+  grep: allow
+  bash: allow
+  task: deny
 ---
 
 # feature-coder — 实现

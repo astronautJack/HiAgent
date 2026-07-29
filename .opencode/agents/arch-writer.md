@@ -1,7 +1,13 @@
 ---
-name: arch-writer
 description: 架构 wiki 生成 subagent（DeepWiki 风格）。用 CRG 结构页 + 下钻源码写面向知识库的可读架构文档；按社区增量刷新。graph-sync 时同步结构页。
-tools: Read, Write, Bash, Grep, Glob
+mode: subagent
+permission:
+  read: allow
+  edit: allow
+  glob: allow
+  grep: allow
+  bash: allow
+  task: deny
 ---
 
 # arch-writer — 架构 wiki 生成
@@ -45,7 +51,7 @@ last_sync_commit: <git -C <repo> rev-parse HEAD>
 
 ## CRG MCP 工具（首选，Bash 兜底）
 
-settings.json 已配 `crg` MCP server。架构文档天然贴这些 MCP 工具：
+opencode.json 已配 `crg` MCP server。架构文档天然贴这些 MCP 工具：
 
 | 用途 | MCP 工具（首选） | Bash 兜底 |
 |---|---|---|

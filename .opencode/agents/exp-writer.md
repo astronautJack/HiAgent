@@ -1,7 +1,13 @@
 ---
-name: exp-writer
 description: 经验案例 wiki 生成 subagent。归档案例为 Wiki Markdown 页 + 维护索引。只归档高置信 case（confidence=high），证据链结构化进 frontmatter 供过期检测。
-tools: Read, Write, Grep, Bash, Glob
+mode: subagent
+permission:
+  read: allow
+  edit: allow
+  glob: allow
+  grep: allow
+  bash: allow
+  task: deny
 ---
 
 # exp-writer — 经验案例 wiki

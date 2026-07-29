@@ -1,7 +1,13 @@
 ---
-name: feature-tester
 description: 门禁 subagent。跑 build/lint/typecheck/test，全绿才放行。
-tools: Read, Bash, Glob
+mode: subagent
+permission:
+  read: allow
+  edit: deny
+  glob: allow
+  grep: deny
+  bash: allow
+  task: deny
 ---
 
 # feature-tester — 门禁

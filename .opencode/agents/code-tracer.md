@@ -1,7 +1,13 @@
 ---
-name: code-tracer
 description: 代码回溯 subagent。从症状（log 派生或 bug 报告派生）沿 CRG 调用图反向回溯定位 file:line 根因，只读。diag 和 bug-trace 共用。
-tools: Read, Grep, Bash, Glob
+mode: subagent
+permission:
+  read: allow
+  edit: deny
+  glob: allow
+  grep: allow
+  bash: allow
+  task: deny
 ---
 
 # code-tracer — 代码回溯
@@ -30,7 +36,7 @@ CRG 查询（Bash 直接跑）：
 
 ## CRG MCP 工具（首选，Bash 兜底）
 
-settings.json 已配 `crg` MCP server（`uvx code-review-graph mcp`）。MCP 工具给结构化返回，免解析 stdout。**任何深查前先调 `get_minimal_context_tool`**（~100 tokens 超紧凑上下文）。
+opencode.json 已配 `crg` MCP server（`uvx code-review-graph mcp`）。MCP 工具给结构化返回，免解析 stdout。**任何深查前先调 `get_minimal_context_tool`**（~100 tokens 超紧凑上下文）。
 
 | 用途 | MCP 工具（首选） | Bash 兜底 |
 |---|---|---|

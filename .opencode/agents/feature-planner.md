@@ -1,7 +1,13 @@
 ---
-name: feature-planner
 description: 需求→设计 subagent。读 wiki+CRG 图定位触点，出设计（改动点/风险/测试计划），只读。
-tools: Read, Grep, Bash, Glob
+mode: subagent
+permission:
+  read: allow
+  edit: deny
+  glob: allow
+  grep: allow
+  bash: allow
+  task: deny
 ---
 
 # feature-planner — 需求→设计
@@ -12,12 +18,12 @@ tools: Read, Grep, Bash, Glob
 
 输入：需求文本、`<repo>`、`<wiki>`。
 1. Read wiki 索引 + 相关页，提炼相关模块、约定、不变量。
-2. `Bash(code-review-graph status/visualize --repo <repo>)` 用图定位改动文件/符号 + 影响面。
+2. `code-review-graph status/visualize --repo <repo>` 用图定位改动文件/符号 + 影响面。
 3. 出设计：改动点清单、方案、风险、测试计划、要更新的 wiki 页。
 
 ## CRG MCP 工具（首选，Bash 兜底）
 
-settings.json 已配 `crg` MCP server。**定位改动触点前先调 `get_minimal_context_tool`** 拿超紧凑上下文。
+opencode.json 已配 `crg` MCP server。**定位改动触点前先调 `get_minimal_context_tool`** 拿超紧凑上下文。
 
 | 用途 | MCP 工具（首选） | Bash 兜底 |
 |---|---|---|

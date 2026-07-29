@@ -1,7 +1,13 @@
 ---
-name: flow-writer
 description: 业务流 wiki 生成 subagent。用 CRG flows/flow/query callees_of 取执行流→按业务域分组→每生命周期写一页（调用序列 mermaid + 逐步错误/上报 + 错误目录 + error_index）。
-tools: Read, Write, Bash, Grep, Glob
+mode: subagent
+permission:
+  read: allow
+  edit: allow
+  glob: allow
+  grep: allow
+  bash: allow
+  task: deny
 ---
 
 # flow-writer — 业务流 wiki 生成
@@ -14,10 +20,10 @@ tools: Read, Write, Bash, Grep, Glob
 
 输入：`<repo>`（CRG 图已新鲜，由调用方在启动 workflow 前确认）、`<out-dir>`、可选 `<flow-prefix>`。
 
-1. `Bash(code-review-graph flows --repo <repo>)` 列所有入口流。按 `<flow-prefix>` 或命名前缀分组成**业务生命周期**。
+1. `code-review-graph flows --repo <repo>` 列所有入口流。按 `<flow-prefix>` 或命名前缀分组成**业务生命周期**。
 2. 每生命周期一页：
-   a. `Bash(code-review-graph flow --name <入口> --source --repo <repo>)` 拿调用链（节点 + `file:line`）。
-   b. `Bash(code-review-graph query callees_of <节点> --repo <repo>)` 逐节点下钻；Read 工具读函数体。
+   a. `code-review-graph flow --name <入口> --source --repo <repo>` 拿调用链（节点 + `file:line`）。
+   b. `code-review-graph query callees_of <节点> --repo <repo>` 逐节点下钻；Read 工具读函数体。
    c. Grep 搜 `HiSysEvent::Write`/`HiSysEvent_Write`/`HISYSEVENT_BEHAVIOR`/`hilog.*\b[EF]\b`/error code 常量 → 抽 event domain/name + 抛出 `file:line`。
    d. Write `<out-dir>/<biz-slug>.md`（按下「每页模板」）。路径全相对仓根。
 3. Write `<out-dir>/error_index.md`：聚合所有页的 `error_catalog` 成一张查表（`page_id | code | event | msg_pattern | throw_file | throw_line | step | function`）。**小、可全量入 diag workflow 上下文**——wiki-reader 只读它做匹配，不全量读各页。
@@ -56,7 +62,7 @@ last_sync_commit: <git -C <repo> rev-parse HEAD>
 
 ## CRG MCP 工具（首选，Bash 兜底）
 
-settings.json 已配 `crg` MCP server。MCP 给结构化返回，免解析 stdout。
+opencode.json 已配 `crg` MCP server。MCP 给结构化返回，免解析 stdout。
 
 | 用途 | MCP 工具（首选） | Bash 兜底 |
 |---|---|---|

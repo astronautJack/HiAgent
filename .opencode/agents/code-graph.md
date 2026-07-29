@@ -1,7 +1,13 @@
 ---
-name: code-graph
 description: CRG 代码图管理 subagent。build/update/status/freshness/visualize/wiki 子命令（贵的图操作集中）。掌握 CRG 全部 CLI 命令面，可作其他 agent 的 CRG 查询兜底。只读源码。
-tools: Read, Bash, Glob
+mode: subagent
+permission:
+  read: allow
+  edit: deny
+  glob: allow
+  grep: deny
+  bash: allow
+  task: deny
 ---
 
 # code-graph — 代码图管理
@@ -46,7 +52,7 @@ tools: Read, Bash, Glob
 
 > `detect-changes --brief` 是 read-only（查现有图，~1s）；`update --brief` 先重解析再显示面板（~5s）。hooks/daemon 保新鲜时用 `detect-changes`，怀疑图过时用 `update`。
 
-## MCP 工具（30 个，经 settings.json 的 `crg` MCP server 暴露）
+## MCP 工具（30 个，经 opencode.json 的 `crg` MCP server 暴露）
 
 `mcpServers.crg` 配 `uvx code-review-graph mcp` 后，所有 agent 可直接调 MCP 工具（结构化，免 Bash 解析）。常用：
 

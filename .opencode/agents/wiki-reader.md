@@ -1,7 +1,13 @@
 ---
-name: wiki-reader
 description: wiki 上下文读取 subagent。读索引匹配信号 + 按需取页，给回溯/设计提供调用链/契约/预期行为上下文，只读。所有需要 wiki 上下文的用例共用。
-tools: Read, Grep, Bash, Glob
+mode: subagent
+permission:
+  read: allow
+  edit: deny
+  glob: allow
+  grep: allow
+  bash: allow
+  task: deny
 ---
 
 # wiki-reader — wiki 上下文读取
@@ -27,7 +33,7 @@ tools: Read, Grep, Bash, Glob
 读到经验案例页（`cases/*.md`）时先验过期——案例写的证据 file:line 可能已不匹配当前代码（Thinkroom 第一道防线：当下代码赢过历史文档）：
 
 1. 从 frontmatter 取 `source_commit` + `evidence`（或 `source_paths`）。
-2. `Bash(git -C <repo> diff <source_commit>..HEAD --name-only -- <evidence 涉及的文件>)`。
+2. `git -C <repo> diff <source_commit>..HEAD --name-only -- <evidence 涉及的文件>`。
 3. 输出非空 → 证据文件自 case 写后已变，case **可能过期**：不当 ground truth 注入；返回时标 `stale: true` + 列出哪些文件变了，让调用方（code-tracer）知重不轻信。
 4. 输出空 → case 证据仍匹配当前代码，正常注入。
 
@@ -35,7 +41,7 @@ tools: Read, Grep, Bash, Glob
 
 ## CRG MCP 工具（兜底，符号定位时可选）
 
-settings.json 已配 `crg` MCP server。wiki 无/未命中需退回源码定位符号时，MCP 语义搜索比 Bash keyword 搜更准：
+opencode.json 已配 `crg` MCP server。wiki 无/未命中需退回源码定位符号时，MCP 语义搜索比 Bash keyword 搜更准：
 
 | 用途 | MCP 工具 | Bash 兜底 |
 |---|---|---|
