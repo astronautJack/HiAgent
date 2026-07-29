@@ -38,7 +38,7 @@ created_from: diag | bug-trace | manual
 confidence: high          # 归档门只放 high 进来
 source_commit: <git -C <repo> rev-parse HEAD>   # 过期检测基准
 evidence:                  # 结构化证据链（供 wiki-reader 过期检测 + 溯源）
-  - kind: log | code | hisysevent | crg_node | git_commit
+  - kind: log | code | crg_node | git_commit
     ref: <log 行号 | file:line | event 名 | node 名 | commit hash>
 related: [<slug>, ...]
 source_paths: [<证据涉及的源文件相对路径>]   # 共享约定字段，也用于过期检测

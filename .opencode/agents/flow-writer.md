@@ -24,7 +24,7 @@ permission:
 2. 每生命周期一页：
    a. `code-review-graph flow --name <入口> --source --repo <repo>` 拿调用链（节点 + `file:line`）。
    b. `code-review-graph query callees_of <节点> --repo <repo>` 逐节点下钻；Read 工具读函数体。
-   c. Grep 搜 `HiSysEvent::Write`/`HiSysEvent_Write`/`HISYSEVENT_BEHAVIOR`/`hilog.*\b[EF]\b`/error code 常量 → 抽 event domain/name + 抛出 `file:line`。
+   c. Grep 搜错误上报/抛出点：`throw`/`raise`/`Log.[ewwtf]`/`Log.e`/`wtf`/`exception`/error code 常量/`FATAL`/`ANR` → 抽错误码/消息模式 + 抛出 `file:line`。
    d. Write `<out-dir>/<biz-slug>.md`（按下「每页模板」）。路径全相对仓根。
 3. Write `<out-dir>/error_index.md`：聚合所有页的 `error_catalog` 成一张查表（`page_id | code | event | msg_pattern | throw_file | throw_line | step | function`）。**小、可全量入 diag workflow 上下文**——wiki-reader 只读它做匹配，不全量读各页。
 4. Write `<out-dir>/README.md`（生命周期清单 + `last_sync_commit`，用 `git -C <repo> rev-parse HEAD` 自动取，**不硬编码**）。
@@ -55,7 +55,7 @@ last_sync_commit: <git -C <repo> rev-parse HEAD>
 章节：
 - **业务背景**：这生命周期干什么、何时触发、端到端步骤（投播：发现→投播→连接→播放→控制→停止）。
 - **调用序列**：mermaid `sequenceDiagram`/`flowchart`，函数名 + `file:line`，入口到终态。
-- **逐步错误/上报**：链上每函数——写哪些 HiSysEvent（domain/name/params）、error code 常量、hilog E/F、throw/catch 位置，全带 `file:line`。
+- **逐步错误/上报**：链上每函数——抛哪些错误（错误码/消息模式/异常类型）、error code 常量、E/F 级日志、throw/catch 位置，全带 `file:line`。
 - **错误目录**：`{code | event | msg_pattern → throw file:line + 所属步骤 + 函数}` 查表。日志一报错直接反查到行。
   - 错误目录/报告只用 **markdown 表格**；**禁止 `<!-- ERR:` HTML 注释锚点**——无人解析且易畸形未闭合；wiki-reader 只读 `error_index.md` 表格。
 - **下钻锚点**：关键 `文件:行`。

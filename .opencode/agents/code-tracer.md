@@ -16,7 +16,7 @@ permission:
 
 ## 任务
 
-输入：`<repo>`（CRG 图已新鲜，由调用方在启动 workflow 前确认）、`<symptom>`（错误 message / 失败符号 / 栈帧锚点）。
+输入：`<repo>`（CRG 图已新鲜，由调用方在启动 command 前确认）、`<symptom>`（错误 message / 失败符号 / 栈帧 / 关键词）。
 
 ### 1. 定位 throw 点
 - Grep 工具搜 `<symptom>` 在 `<repo>`，文件类型 `*.{cpp,h,c,js,ts,py,java,go,rs}` → 找 throw/file:line。

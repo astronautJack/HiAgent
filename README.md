@@ -10,7 +10,7 @@ flowchart TB
     WFs --> Producers["Wiki 生产者（3）<br/>arch · flow · exp-writer"]
     WFs --> Pipeline["feature 流水线（4）<br/>planner · coder · reviewer · tester"]
     Shared --> CRG[("CRG<br/>code-review-graph")]
-    Shared --> CLI[("logscope-triage CLI<br/>Drain3 + 鸿蒙 parser")]
+    Shared --> CLI[("logscope-triage CLI<br/>纯 Drain3 通用")]
     Producers --> Wiki[("Wiki<br/>Markdown 知识库")]
     Wiki --> ATH[("私有向量数据库<br/>RAG 检索 ⏳")]
 ```
@@ -19,7 +19,7 @@ flowchart TB
 
 **1. 日志定位——丢日志进去，出代码行**
 
-把客户日志丢进来，自动压缩提关键信号，沿代码调用图反向回溯，定位到**具体哪一行代码**有问题，附证据链（日志行号 + `文件:行` + 调用链）。鸿蒙日志（hilog / HiSysEvent / 崩溃栈）开箱即用；长日志不爆上下文（先压成有界摘要，只回读关键行段）。定位给的是根因，不是转发症状。
+把客户日志丢进来，自动压缩提关键信号（Drain3 模板挖掘 + 新见簇检测），沿代码调用图反向回溯，定位到**具体哪一行代码**有问题，附证据链（日志行号 + `文件:行` + 调用链）。任意格式日志（logcat / 通用文本日志）开箱即用；长日志不爆上下文（先压成有界摘要，只回读关键行段）。定位给的是根因，不是转发症状。
 
 **2. 经验沉淀——解决过的 case 存下来，下次一查就命中**
 
@@ -65,7 +65,7 @@ HiAgent/
 ├── opencode.json          # 权限 + CRG MCP（根目录）
 ├── AGENTS.md              # agent-facing 指令（两层架构 + command 表 + wiki 约定 + 新鲜度门）
 ├── tools/
-│   ├── src/logscope_triage/  # logscope-triage CLI 源（Drain3 + 鸿蒙 parser）
+│   ├── src/logscope_triage/  # logscope-triage CLI 源（纯 Drain3 通用）
 │   ├── test/                 # 单元测试 + 样本
 │   └── pyproject.toml
 ├── AGENTS.md
@@ -100,7 +100,7 @@ export PATH="$HOME/.local/bin:$PATH"   # 永久：写进 ~/.bashrc
 
 # 6. 验证
 code-review-graph --version            # 应出版本号
-logscope-triage --help                 # 应有 --json / --log-format
+logscope-triage --help                 # 应有 --json
 
 # 7. 启动 OpenCode（加载 .opencode/ + opencode.json + AGENTS.md）
 opencode
@@ -126,7 +126,7 @@ $env:Path += ";$HOME\.local\bin"   # 当前会话；永久：系统环境变量�
 
 # 6. 验证
 code-review-graph --version            # 应出版本号
-logscope-triage --help                 # 应有 --json / --log-format
+logscope-triage --help                 # 应有 --json
 
 # 7. 启动 OpenCode（加载 .opencode/ + opencode.json + AGENTS.md）
 opencode
