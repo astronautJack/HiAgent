@@ -1,15 +1,15 @@
-// diag — 日志问题定位：log-parser 压日志 → wiki-reader 取上下文 → code-tracer 回溯 → critic 复核 → 报告
+// diag — 日志问题定位：log-parser 压日志 → wiki-reader 取上下文 → code-tracer 写报告 → reviewer 独立审 loop → 报告
 // CRG 新鲜度由会话在启动前确认
 export const meta = {
   name: 'diag',
   description: '日志问题定位到代码行',
-  whenToUse: '用户给了日志文件/文本，要定位到代码行。传 args {logPath|logText, repo, wiki?, logFormat?}。CRG 图须新鲜。',
+  whenToUse: '用户给了日志文件/文本，要定位到代码行。传 args {logPath|logText, repo, wiki?, logFormat?, reportPath?}。CRG 图须新鲜。',
   phases: [
     { title: 'Triage', detail: 'log-parser 压日志' },
     { title: 'Context', detail: 'wiki-reader 取契约' },
-    { title: 'Trace', detail: 'code-tracer 反向回溯' },
-    { title: 'Critic', detail: '自校正复核（≤3）' },
-    { title: 'Report', detail: '汇总报告' },
+    { title: 'Trace', detail: 'code-tracer 写报告' },
+    { title: 'Review', detail: 'reviewer 独立审（≤3 loop）' },
+    { title: 'Report', detail: '呈现报告' },
   ],
 }
 
@@ -27,21 +27,24 @@ const DIGEST_SCHEMA = {
 const CONTEXT_SCHEMA = { type: ['object', 'null'], properties: { matched: { type: 'array' } } }
 const TRACE_SCHEMA = {
   type: 'object', additionalProperties: false,
-  required: ['file', 'line', 'confidence', 'evidence'],
+  required: ['report_path', 'file', 'line', 'confidence'],
   properties: {
+    report_path: { type: 'string' },
     file: { type: 'string' }, line: { type: 'integer' },
     confidence: { type: 'string', enum: ['high', 'medium', 'low'] },
-    evidence: { type: 'array', items: { type: 'object', properties: { kind: { type: 'string' }, ref: { type: 'string' } } } },
   },
 }
 const VERDICT_SCHEMA = {
   type: 'object', additionalProperties: false,
-  required: ['confident', 'feedback'],
-  properties: { confident: { type: 'boolean' }, feedback: { type: 'string' } },
+  required: ['verdict', 'findings'],
+  properties: {
+    verdict: { type: 'string', enum: ['pass', 'revise'] },
+    findings: { type: 'array', items: { type: 'string' } },
+  },
 }
 
 export default async function ({ agent, phase, log, args }) {
-  const { logPath, logText, repo, wiki, logFormat = 'auto' } = args
+  const { logPath, logText, repo, wiki, logFormat = 'auto', reportPath = './diag-report.md' } = args
 
   phase('Triage')
   const digest = await agent(
@@ -62,21 +65,32 @@ export default async function ({ agent, phase, log, args }) {
   }
 
   let trace = null
+  let verdict = null
+  let consensus = false
   for (let attempt = 0; attempt < 3; attempt++) {
     phase('Trace')
+    const findingsInput = (attempt > 0 && verdict) ? `\nreviewer 上一轮 findings（据此修订）：${JSON.stringify(verdict.findings)}` : ''
     trace = await agent(
-      `沿 CRG 调用图反向回溯定位 file:line。repo: ${repo}（图已新鲜）。\ndigest: ${JSON.stringify(digest)}\n${context ? 'wiki 契约: ' + JSON.stringify(context) : '无 wiki，退回源码'}`,
+      `沿 CRG 调用图反向回溯定位 file:line + 写报告。repo: ${repo}（图已新鲜）。report_path: ${reportPath}。\ndigest: ${JSON.stringify(digest)}\n${context ? 'wiki 契约: ' + JSON.stringify(context) : '无 wiki，退回源码'}${findingsInput}\n沿 callers_of 回溯到 file:line 根因 + 证据链（计数用 digest cluster size）+ 构建开关（涉剥离时）+ 修复建议（具体文件+确切语法），Write 报告到 ${reportPath}，返 report_path + file/line/confidence。`,
       { agentType: 'code-tracer', schema: TRACE_SCHEMA, label: `trace-${attempt}` }
     )
-    phase('Critic')
-    const verdict = await agent(
-      `复核证据链是否闭合。trace: ${JSON.stringify(trace)}。confident=true 放行；弱则 feedback 指出缺哪环。`,
-      { schema: VERDICT_SCHEMA, label: `critic-${attempt}` }
+    phase('Review')
+    verdict = await agent(
+      `独立审报告 ${reportPath}（repo: ${repo}，digest: ${JSON.stringify(digest)}）。重跑 CRG/grep + 重读源码 + 对 digest 验计数 + 验修复可 apply，返 verdict（pass/revise）+ findings。`,
+      { agentType: 'code-tracer-reviewer', schema: VERDICT_SCHEMA, label: `review-${attempt}` }
     )
-    if (verdict.confident) { log(`Attempt ${attempt}: confident`); break }
-    log(`Attempt ${attempt}: weak — ${verdict.feedback}`)
+    if (verdict.verdict === 'pass') { log(`Attempt ${attempt}: pass`); consensus = true; break }
+    log(`Attempt ${attempt}: revise — ${JSON.stringify(verdict.findings)}`)
+  }
+
+  if (!consensus) {
+    log('max loop 未共识，追加存疑点')
+    await agent(
+      `max loop 未共识。在 ${reportPath} 末尾加 \`## 存疑点\` 段，列 reviewer 指出但未解决的点：${JSON.stringify(verdict.findings)}。`,
+      { agentType: 'code-tracer', label: 'open-questions' }
+    )
   }
 
   phase('Report')
-  return { file: trace.file, line: trace.line, confidence: trace.confidence, evidence: trace.evidence, claimed_error: digest.claimed_error, digest_preview: digest.preview }
+  return { report_path: reportPath, file: trace.file, line: trace.line, confidence: trace.confidence, claimed_error: digest.claimed_error, consensus, has_open_questions: !consensus }
 }
