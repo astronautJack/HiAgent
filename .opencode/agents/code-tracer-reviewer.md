@@ -8,6 +8,9 @@ permission:
   grep: allow
   bash: allow
   task: deny
+  # 测试隔离：禁联网防 /diag 搜答案；发行前视情况改回 allow
+  webfetch: deny
+  websearch: deny
 ---
 
 # code-tracer-reviewer — 事实 + 逻辑审阅
