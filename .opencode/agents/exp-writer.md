@@ -16,17 +16,6 @@ permission:
 
 ## Wiki 约定
 
-**frontmatter**：
-```yaml
-id: <slug>
-title: <人类可读>
-level: L2
-parent: <repo>-wiki
-related: [<slug>, ...]
-source_paths: [相对路径, ...]
-last_sync_commit: <git -C <repo> rev-parse HEAD>
-```
-
 **增量刷新**（避免无谓重写未变页）：
 1. 无旧 wiki（首次）→ 全量。
 2. 否则逐页：Read 旧页 frontmatter `last_sync_commit`（无 → 重做）。
