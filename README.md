@@ -113,14 +113,15 @@ testN/
 | **test3** | log 完整（原始 logcat，未筛选） | 问题较简单——`MissingResourceException` 栈帧几乎直接指向 `Localization.java:379`，根因在栈里就可见，没真正考验「反向回溯」的深度 |
 | **test4** | 问题较难——症状（`UninitializedPropertyAccessException` @ `PendingUploadsFragment.kt:150`）mask 了真根因（在另一个类 `UploadProgressActivity.kt:77` + Fragment 生命周期机制），需跨类回溯 | log 是 issue 提交者**已筛选过的**（28 行，截到关键栈 + `CONFIGURATION_CHANGED` + `USER_COMMENT`），不是原始长日志——没考验 `/diag` 处理原始长日志的 triage 能力（`log-parser` 压缩 + 新见簇检测那一段没真正跑） |
 | **test5** | 问题难 + **native/南向**——症状（SIGSEGV @ scudo + execute-non-exec）mask 了真根因（另一仓的 delegate 所有权 + GC 生命周期），需跨仓回溯 | log 是 crash report **截断**（6 帧，全 tombstone 在 reporter 本机未公开）——仍非原始长日志；且根因只部分通过（机制未钉死、真凶未点名） |
+| **test6** | 问题同 test5 + **主会话编排首次跑通**（去 `subtask: true` + 编排契约 + 清根 `.opencode` 冲突后，Task 串 subagent 通了）+ imdrak 独立反汇编确证候选 A（`shouldOverridePullTransaction` +524 `blr`） | log 同 test5（截断 6 帧）；根因机制（同线程重入）**判断错**——实际是 Java GC finalizer 跨线程 race + `weak_ptr::lock()` 对回收控制块返回 non-null；修复方向随之偏（snapshot/re-lock vs 进程级单例） |
 
 其他不足：
-- **样本量小**：仅 3 个 case（test1/test2 已删，方法不成熟故弃）。
-- **格式**：test3/test4 是 Java/Kotlin logcat，test5 是 native C++ crash report——Android 内已多样，但都还是 Android，未测通用文本日志（服务端）。
+- **样本量小**：仅 4 个 case（test1/test2 已删，方法不成熟故弃）。
+- **格式**：test3/test4 是 Java/Kotlin logcat，test5/test6 是 native C++ crash report——Android 内已多样，但都还是 Android，未测通用文本日志（服务端）。
 - **审阅同源**：审阅者与 code-tracer 是同一 LLM，可能有同源盲区；且对照已知答案 PR 有 hindsight 风险。
-- **未跑真实回归**：test4/test5 codebase 都是修复前快照，未在修复后 codebase 上复跑确认「定位消失」，仅靠 PR 对照，非闭环。
+- **未跑真实回归**：test4/test5/test6 codebase 都是修复前快照，未在修复后 codebase 上复跑确认「定位消失」，仅靠 PR 对照，非闭环。
 
-**下一步可补**：test5 部分补上「native/南向 + 难」方向（但仍 log 截断 + 根因未钉死）。真正闭环需找一个 native case 带**全 tombstone**（能逐指令符号化偏移、钉死行 + 真凶），或一个「问题难 + 原始长日志」的服务端文本日志 case。
+**下一步可补**：test6 主会话编排已跑通 + imdrak 反汇编补了 +524 确证（候选 A 对），但根因机制（GC finalizer 跨线程 race）仍推断错。真正闭环需找一个 native case 带**全 tombstone**（能逐指令符号化偏移、看到 GC finalizer 前导帧），或一个「问题难 + 原始长日志」的服务端文本日志 case。
 
 ---
 
