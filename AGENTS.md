@@ -45,28 +45,6 @@
 | `exp-archive` | exp-writer（写案例页 + 索引） |
 | `exp-search` | wiki-reader（查索引 + 全文匹配） |
 
-## Wiki 约定（所有 wiki 生产者遵循）
-
-**frontmatter**：
-```yaml
-id: <slug>
-title: <人类可读>
-level: L2
-parent: <repo>-wiki
-related: [<slug>, ...]
-source_paths: [相对路径, ...]
-last_sync_commit: <git -C <repo> rev-parse HEAD>
-```
-
-**增量刷新**（避免无谓重写未变页）：
-1. 无旧 wiki（首次）→ 全量。
-2. 否则逐页：Read 旧页 frontmatter `last_sync_commit`（无 → 重做）。
-3. `git -C <repo> diff <last_sync>..HEAD --name-only` 拿变化文件。
-4. 该页 `source_paths` 与变化文件取交集；非空 → 重做，空 → 跳过保留。
-5. `last_sync_commit` 刷新为当前 HEAD。
-
-**索引格式**：markdown 表格（小，可全量入上下文给 wiki-reader 检索）。禁 HTML 注释锚点。
-
 ## 人审 checkpoint 是 workflow 边界
 
 workflow 不能中途暂停问用户。`feature-design` / `bug-trace` / `diag` 返回报告后会话呈现交人审；批准后才进 implement/fix workflow（未来加）。`diag` 用「code-tracer 写报告 + 独立 reviewer 审」双 agent loop（最多 3 次），防 code-tracer 自审自圆其说；max loop 未共识则在报告末尾加 `## 存疑点` 段。
