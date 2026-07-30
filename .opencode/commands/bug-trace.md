@@ -6,7 +6,7 @@ BUG 报告定位根因。参数：$ARGUMENTS（bug 报告文本 + 代码仓路�
 
 按以下步骤编排，中间结果留你这，最后返报告：
 
-1. **CRG 新鲜度门（内联，可问用户）**：跑 `bash: code-review-graph status --repo <repo>`。缺/过时 → question 问用户 build / update / 不跑（放弃）。刷新后继续。
+1. **CRG 新鲜度门**：Task 调 `code-graph`（全程判新鲜/问询/建图/报错）。`{ok:true}`→继续 step 2；`{ok:false}`→workflow 中止，不继续。
 
 2. **取预期**：若有 wiki → Task 调 `wiki-reader`，传 bug 报告里的符号当信号，读 wiki 取预期行为 + 涉及模块。无 wiki → 跳过（提示「本仓无 wiki，本次无历史经验加持；可先跑 /arch-doc、/flow-doc 生成」但不停下）。
 

@@ -8,6 +8,7 @@ permission:
   grep: deny
   bash: allow
   task: deny
+  question: allow
 ---
 
 # code-graph — 代码图管理
@@ -81,3 +82,14 @@ permission:
 - 只读源码（tools 不含 Write/Edit）；CRG CLI 自己写 `.code-review-graph/`（SQLite 图库 + wiki），正常副作用。
 - 大仓 build 贵——是否 build 由调用方（会话）门控，本 agent 只在被调到时执行。
 - 查询类（search/query/impact/flow）首选由 code-tracer 和 wiki 生产者直接跑（它们更懂上下文）；你只在兜底时跑。
+
+## CRG 新鲜度门（被 diag/bug-trace/feature-design/flow-doc 的 step 1 Task 调用，全程在此）
+
+你被调是为了确保 CRG 图新鲜——要么拿到新鲜图返 `{ok:true}`，要么在此中止 workflow。全程在此解决（判新鲜 + 问询 + 建图 + 报错），调用方只看结果。
+
+1. `bash: code-review-graph status --repo <repo>`。
+2. fresh → 返 `{ok: true}`。
+3. 缺/过时 → question 问用户三选一：
+   - **build** → `bash: code-review-graph build --repo <repo>`（**Bash CLI，不走 MCP**——MCP RPC 有超时，大仓建图会被杀）。成功→`{ok:true}`；超时/报错→`{ok:false, error:"CRG 建图超时/失败；请在 shell 手动跑 \`code-review-graph build --repo <repo>\` 完成建图后重试"}`。
+   - **update** → `bash: code-review-graph update --repo <repo>`。成功→`{ok:true}`；失败→`{ok:false, error}`。
+   - **不跑** → `{ok:false, error:"用户放弃，workflow 不启动"}`。
