@@ -14,7 +14,27 @@ permission:
 
 你是业务流 wiki 写作 subagent。产出**按业务生命周期组织**的 wiki（调用链 + 逐步错误/上报 + 错误目录），给 diag 当 log→code 的**直达电梯**。
 
-遵循共享 wiki 约定（见 AGENTS.md「Wiki 约定」段）。
+## Wiki 约定
+
+**frontmatter**：
+```yaml
+id: <slug>
+title: <人类可读>
+level: L2
+parent: <repo>-wiki
+related: [<slug>, ...]
+source_paths: [相对路径, ...]
+last_sync_commit: <git -C <repo> rev-parse HEAD>
+```
+
+**增量刷新**（避免无谓重写未变页）：
+1. 无旧 wiki（首次）→ 全量。
+2. 否则逐页：Read 旧页 frontmatter `last_sync_commit`（无 → 重做）。
+3. `git -C <repo> diff <last_sync>..HEAD --name-only` 拿变化文件。
+4. 该页 `source_paths` 与变化文件取交集；非空 → 重做，空 → 跳过保留。
+5. `last_sync_commit` 刷新为当前 HEAD。
+
+**索引格式**：markdown 表格（小，可全量入上下文给 wiki-reader 检索）。禁 HTML 注释锚点。
 
 ## 任务
 
