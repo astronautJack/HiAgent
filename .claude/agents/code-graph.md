@@ -73,5 +73,14 @@ tools: Read, Bash, Glob
 ## 约束
 
 - 只读源码（tools 不含 Write/Edit）；CRG CLI 自己写 `.code-review-graph/`（SQLite 图库 + wiki），正常副作用。
-- 大仓 build 贵——是否 build 由调用方（会话）门控，本 agent 只在被调到时执行。
 - 查询类（search/query/impact/flow）首选由 code-tracer 和 wiki 生产者直接跑（它们更懂上下文）；你只在兜底时跑。
+
+## CRG 门（被各 workflow 的 gate phase 调用，全程在此，无问询）
+
+你被调是为了确保 CRG 图新鲜——fresh 则返 `{ok:true}`，否则自动建图。Claude Code workflow 不能中途问用户，故不问、直接建。
+
+1. `bash: code-review-graph status --repo <repo>`。
+2. fresh → 返 `{ok: true}`。
+3. 缺/过时 → `bash: code-review-graph build --repo <repo>`（**Bash CLI，不走 MCP**——MCP RPC 有超时，大仓建图会被杀；全量建图含 flows，不 skip）。
+   - 成功 → `{ok: true}`。
+   - 超时或报错（大仓 build 超 Bash 工具超时阈值，或 build 失败）→ `{ok: false, error: "CRG 建图超时/失败；请在 shell 手动跑 \`code-review-graph build --repo <repo>\` 完成建图后重试"}`。不挂死、不静默继续。

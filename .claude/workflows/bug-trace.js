@@ -1,10 +1,11 @@
-// bug-trace — BUG 定位（bug 报告驱动）：wiki-reader 取预期 → code-tracer 回溯 → 报告
-// CRG 新鲜度由会话在启动前确认
+// bug-trace — BUG 定位：CRG 门 → wiki-reader 取预期 → code-tracer 回溯 → 报告
+// CRG 门由 phase 1 调 code-graph（自动建图，无问询）
 export const meta = {
   name: 'bug-trace',
   description: 'BUG 定位（bug 报告驱动，非日志）',
   whenToUse: '用户给了 bug 报告/失败现象（非日志），要找根因。传 args {report, repo, wiki?}。CRG 图须新鲜。',
   phases: [
+    { title: 'CRG', detail: 'code-graph 判新鲜/自动建图' },
     { title: 'Read', detail: 'wiki-reader 取预期行为' },
     { title: 'Trace', detail: 'code-tracer 反向回溯' },
     { title: 'Report', detail: '根因报告' },
@@ -24,6 +25,16 @@ const TRACE_SCHEMA = {
 
 export default async function ({ agent, phase, log, args }) {
   const { report, repo, wiki } = args
+
+  phase('CRG')
+  const crg = await agent(
+    `CRG 门：status 判新鲜→{ok:true}；缺/过时→自动 build（Bash CLI，不走 MCP，全量含 flows，不 skip），超时/报错→{ok:false,error}。repo: ${repo}。`,
+    { agentType: 'code-graph', schema: { type: 'object', required: ['ok'], properties: { ok: { type: 'boolean' }, error: { type: 'string' } } }, label: 'crg-gate' }
+  )
+  if (!crg.ok) {
+    log(`CRG gate aborted: ${crg.error || ''}`)
+    return { aborted: true, error: crg.error }
+  }
 
   phase('Read')
   let context = null
