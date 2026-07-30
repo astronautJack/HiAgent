@@ -25,3 +25,6 @@ cases/
 .idea/
 .DS_Store
 Thumbs.db
+
+# 防止 worktree 根的 .opencode 残留冲突子目录配置
+/.opencode/
