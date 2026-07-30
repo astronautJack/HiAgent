@@ -1,6 +1,5 @@
 ---
 description: 生成架构文档（建图 → arch-writer 写散文）
-subtask: true
 ---
 生成目标仓的架构文档。参数：$ARGUMENTS（代码仓路径 [+ wiki 输出路径]）
 

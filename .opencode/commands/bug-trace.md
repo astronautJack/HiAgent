@@ -1,10 +1,9 @@
 ---
 description: BUG 定位（bug 报告驱动，非日志 → 根因）
-subtask: true
 ---
 BUG 报告定位根因。参数：$ARGUMENTS（bug 报告文本 + 代码仓路径 [+ wiki 路径]）
 
-按以下步骤编排，中间结果留你这，最后返报告：
+按以下步骤编排，最后返报告：
 
 1. **CRG 新鲜度门**：Task 调 `code-graph`（全程判新鲜/问询/建图/报错）。`{ok:true}`→继续 step 2；`{ok:false}`→workflow 中止，不继续。
 

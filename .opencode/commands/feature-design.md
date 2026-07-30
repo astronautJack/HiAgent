@@ -1,6 +1,5 @@
 ---
 description: 需求 → 设计（CRG 门 → feature-planner，交人审）
-subtask: true
 ---
 把需求转成设计文档交人审。参数：$ARGUMENTS（需求描述 + 代码仓路径）
 
