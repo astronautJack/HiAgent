@@ -1,10 +1,11 @@
-// diag — 日志问题定位：log-parser 压日志 → wiki-reader 取上下文 → code-tracer 写报告 → reviewer 独立审 loop → 报告
-// CRG 新鲜度由会话在启动前确认
+// diag — 日志问题定位：CRG 门 → log-parser 压日志 → wiki-reader 取上下文 → code-tracer 写报告 → reviewer 独立审 loop → 报告
+// CRG 门由 phase 1 调 code-graph（自动建图，无问询）
 export const meta = {
   name: 'diag',
   description: '日志问题定位到代码行',
   whenToUse: '用户给了日志文件/文本，要定位到代码行。传 args {logPath|logText, repo, wiki?, logFormat?, reportPath?}。CRG 图须新鲜。',
   phases: [
+    { title: 'CRG', detail: 'code-graph 判新鲜/自动建图' },
     { title: 'Triage', detail: 'log-parser 压日志' },
     { title: 'Context', detail: 'wiki-reader 取契约' },
     { title: 'Trace', detail: 'code-tracer 写报告' },
@@ -45,6 +46,16 @@ const VERDICT_SCHEMA = {
 
 export default async function ({ agent, phase, log, args }) {
   const { logPath, logText, repo, wiki, logFormat = 'auto', reportPath = './diag-report.md' } = args
+
+  phase('CRG')
+  const crg = await agent(
+    `CRG 门：status 判新鲜→{ok:true}；缺/过时→自动 build（Bash CLI，不走 MCP，全量含 flows，不 skip），超时/报错→{ok:false,error}。repo: ${repo}。`,
+    { agentType: 'code-graph', schema: { type: 'object', required: ['ok'], properties: { ok: { type: 'boolean' }, error: { type: 'string' } } }, label: 'crg-gate' }
+  )
+  if (!crg.ok) {
+    log(`CRG gate aborted: ${crg.error || ''}`)
+    return { aborted: true, error: crg.error }
+  }
 
   phase('Triage')
   const digest = await agent(

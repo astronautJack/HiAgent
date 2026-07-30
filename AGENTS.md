@@ -36,12 +36,12 @@
 | workflow | 编排 |
 |---|---|
 | `entry` | 路由：分类意图 → 调用例 workflow |
-| `diag` | log-parser → wiki-reader → **code-tracer 写报告 → reviewer 独立审 → loop 最多 3 次 → 存疑点** → 报告 |
-| `bug-trace` | wiki-reader → code-tracer → 报告 |
-| `feature-design` | feature-planner → 设计交人审 |
+| `diag` | **CRG 门** → log-parser → wiki-reader → **code-tracer 写报告 → reviewer 独立审 → loop 最多 3 次 → 存疑点** → 报告 |
+| `bug-trace` | **CRG 门** → wiki-reader → code-tracer → 报告 |
+| `feature-design` | **CRG 门** → feature-planner → 设计交人审 |
 | `graph-sync` | code-graph（build+wiki 子命令+sync 到目标目录） |
 | `arch-doc` | code-graph（build+wiki）→ arch-writer 写架构文档 |
-| `flow-doc` | flow-writer（沿 CRG flows 写业务流页 + error_index） |
+| `flow-doc` | **CRG 门** → flow-writer（沿 CRG flows 写业务流页 + error_index） |
 | `exp-archive` | exp-writer（写案例页 + 索引） |
 | `exp-search` | wiki-reader（查索引 + 全文匹配） |
 
@@ -66,18 +66,6 @@ last_sync_commit: <git -C <repo> rev-parse HEAD>
 5. `last_sync_commit` 刷新为当前 HEAD。
 
 **索引格式**：markdown 表格（小，可全量入上下文给 wiki-reader 检索）。禁 HTML 注释锚点。
-
-## 共享预检：CRG 新鲜度门
-
-启动 `diag` / `bug-trace` / `feature-design` / `flow-doc` 前会话先确认 CRG 图新鲜：
-1. `Bash(code-review-graph status --repo <repo>)` 判新鲜。
-2. 缺/过时 → 问用户三选一，问询文本须写清后果：
-   - **build**：建图（首次/图库损坏）
-   - **update**：增量更新（图过时，代码已变）
-   - **不跑**：放弃本次定位（不建图，workflow 不启动）
-3. 用户选定后刷新图，再启动 workflow。
-
-`graph-sync` / `arch-doc` 自己会建图，不额外检查。
 
 ## 人审 checkpoint 是 workflow 边界
 
