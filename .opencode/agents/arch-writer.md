@@ -30,13 +30,13 @@ permission:
 输入：`<repo>`、`<out-dir>`、可选 `<community>`。
 
 1. code-graph 已建图 + 出结构页（在 `<repo>/.code-review-graph/wiki/`）。Read `index.md` 取社区清单。
-2. 给了 `<community>` → 只做该社区（强制覆盖，跳过增量）。否则增量判定（见 AGENTS.md 共享约定）。
+2. 给了 `<community>` → 只做该社区（强制覆盖，跳过增量）。否则增量判定（见下「Wiki 约定」）。
 3. 逐纳入社区：Read 结构页 Members File 列 → Read 下钻源码 → Write `<out-dir>/<slug>.md`（按下「每页模板」）。**大社区只读代表子集**（Members 前 50 涉及的文件 + Flows 入口），不穷举。路径相对仓根。`last_sync_commit` 刷新为当前 HEAD。
 4. Write `<out-dir>/README.md` 索引（社区清单 + `last_sync_commit=HEAD` + 本次重做的社区清单）。
 
 ## 每页模板
 
-frontmatter（基线见 AGENTS.md，外加）：
+frontmatter（基线见每页模板，外加）：
 ```yaml
 ---
 id: <slug>
