@@ -5,8 +5,8 @@
 ```mermaid
 flowchart TB
     Sess["用户 / OpenCode 会话"] --> Entry["智能路由 /entry"]
-    Entry --> WFs["用例 command（9）<br/>━━━━━━━━━━━━<br/>分析定位：diag · bug-trace · feature-design<br/>wiki 生成：graph-sync · arch-doc · flow-doc<br/>经验：exp-archive · exp-search"]
-    WFs --> Shared["共享能力（4）<br/>code-graph · wiki-reader<br/>code-tracer · log-parser"]
+    Entry --> WFs["用例 command（8）<br/>━━━━━━━━━━━━<br/>分析定位：diag · bug-trace · feature-design<br/>wiki 生成：graph-sync · arch-doc · flow-doc<br/>经验：exp-archive · exp-search"]
+    WFs --> Shared["共享能力（5）<br/>code-graph · wiki-reader<br/>code-tracer · code-tracer-reviewer · log-parser"]
     WFs --> Producers["Wiki 生产者（3）<br/>arch · flow · exp-writer"]
     WFs --> Pipeline["feature 流水线（4）<br/>planner · coder · reviewer · tester"]
     Shared --> CRG[("CRG<br/>code-review-graph")]
