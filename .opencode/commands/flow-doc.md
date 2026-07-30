@@ -1,6 +1,5 @@
 ---
 description: 生成业务流 wiki + 错误目录（CRG 门 → flow-writer）
-subtask: true
 ---
 沿 CRG flows 写业务流生命周期页 + error_index。参数：$ARGUMENTS（代码仓路径 + wiki 输出路径）
 
