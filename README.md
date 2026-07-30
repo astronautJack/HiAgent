@@ -82,6 +82,13 @@ testN/
 - **已知答案**：PR [#6532](https://github.com/commons-app/apps-android-commons/pull/6532)——维护者反复调试后结论「stale reference（字段指向错误实例），**非**注入时机/竞态」；最终修法用 `findFragmentByTag` 取回活动实例，与报告定位的根因行 + 机制一致。报告还**提前点了 `failedUploadsFragment` 对称缺陷**，PR 评论中 reviewer Ritika 实测确认同崩。
 - **审阅结论**：**PASS**。定位准、机制经源码逐行证实、证据链闭合、**没停在症状层**（浅报告会停在「改 nullable 兜底」——正是 PR 作者最初被 reviewer 打回的错误方向）；reviewer 放行正确。留 1 温和观察（恢复实例措辞「旧 fragment」严格说是 FM 重建的新实例，不影响机制，非失分）。
 
+### test5 — react-native-screens #4151 native crash（pullTransaction UAF，南向/原生）
+- **case**：native C++ `SIGSEGV` in `MountingCoordinator::pullTransaction`（Fabric/新架构，surface 切换 stop→launch 后崩，`mqt_v_js` 线程，scudo + execute-non-exec memory）
+- **codebase**：`react-native` v0.86.0（框架，崩点 `MountingCoordinator.cpp`）+ `react-native-screens` 4.24.0（库，根因 `RNSScreenRemovalListener`/`NativeProxy`）——**跨仓**，CRG 建合并树（撤嵌套 `.git` + 统一 `git init`，CLI 预建绕开 MCP RPC 超时）。
+- **code-tracer 定位**：崩点 `MountingCoordinator.cpp:124`（`mountingOverrideDelegate->pullTransaction()` 虚分发 UAF），调用链 #02–#05 函数名全对上 log 帧；存疑点#2 抓住 `delegate.lock()` 该保活却没的悖论——**正中 PR crux**（lock 返回 non-null 给已回收控制块）。
+- **已知答案**：PR [#4413](https://github.com/software-mansion/react-native-screens/pull/4413)——根因是 `RNSScreenRemovalListener` 归 `NativeProxy` fbjni hybrid、Java GC 随机销毁其 C++ 半、注册进 core 的 append-only `mountingOverrideDelegates_`（无反注册 API）。
+- **审阅结论**：**部分通过（非 clean PASS）**。崩点定位准（源码逐行验真）+ lock-anomaly 正中 crux + 证据链闭合；但根因机制 3.3（shared_ptr 释放→weak_ptr 悬空）与存疑点#2（lock 非 null）自相矛盾，且未钉真凶（`NativeProxy`/`RNSScreenRemovalListener`/append-only list）。**干净跑**（web-deny + CRG CLI 预建 fresh）。native cross-repo 难 case：到「崩点+方向+crux」、没到「机制钉死+真凶点名」。
+
 ---
 
 ## 五、改进效果对照
@@ -93,24 +100,27 @@ testN/
 
 职责重切解决了 test3 暴露的问题：hedge / 自我审查移出 code-tracer（它只管 assertive 定位），reviewer 只守事实 + 逻辑、不再越权苛责。test4 首测证明重切后**定位质量**与 **reviewer 守门边界**均达标。
 
+**test5（post-重切，native 难 case）的 frontier 信号**：post-重切的 reviewer（事实+逻辑守门）在 test5 放行了一份根因机制有内部矛盾（3.3「悬空」vs 存疑点#2「lock 非 null」）+ 真凶未钉的报告——claim 没假、证据链没断，故未达 revise 硬门槛，但说明**在 native cross-repo 难 case 下，事实+逻辑守门没抓住更深的逻辑矛盾**。这是重切之后的新 frontier，非重切回退。
+
 ---
 
 ## 六、测试不足（坦诚说明）
 
-两个 case 互补地各缺一头：
+三个 case 互补，但「log 完整 + 问题难」仍未同时满足：
 
 | case | 长处 | 短处 |
 |---|---|---|
-| **test3** | log 完整（原始 logcat，未筛选） | 问题本身较简单——`MissingResourceException` 栈帧几乎直接指向 `Localization.java:379`，根因在栈里就可见，没真正考验「反向回溯」的深度 |
+| **test3** | log 完整（原始 logcat，未筛选） | 问题较简单——`MissingResourceException` 栈帧几乎直接指向 `Localization.java:379`，根因在栈里就可见，没真正考验「反向回溯」的深度 |
 | **test4** | 问题较难——症状（`UninitializedPropertyAccessException` @ `PendingUploadsFragment.kt:150`）mask 了真根因（在另一个类 `UploadProgressActivity.kt:77` + Fragment 生命周期机制），需跨类回溯 | log 是 issue 提交者**已筛选过的**（28 行，截到关键栈 + `CONFIGURATION_CHANGED` + `USER_COMMENT`），不是原始长日志——没考验 `/diag` 处理原始长日志的 triage 能力（`log-parser` 压缩 + 新见簇检测那一段没真正跑） |
+| **test5** | 问题难 + **native/南向**——症状（SIGSEGV @ scudo + execute-non-exec）mask 了真根因（另一仓的 delegate 所有权 + GC 生命周期），需跨仓回溯 | log 是 crash report **截断**（6 帧，全 tombstone 在 reporter 本机未公开）——仍非原始长日志；且根因只部分通过（机制未钉死、真凶未点名） |
 
 其他不足：
-- **样本量小**：仅 2 个 case（test1/test2 已删，方法不成熟故弃）。
-- **格式单一**：两个都是 Android logcat，未测通用文本日志。
+- **样本量小**：仅 3 个 case（test1/test2 已删，方法不成熟故弃）。
+- **格式**：test3/test4 是 Java/Kotlin logcat，test5 是 native C++ crash report——Android 内已多样，但都还是 Android，未测通用文本日志（服务端）。
 - **审阅同源**：审阅者与 code-tracer 是同一 LLM，可能有同源盲区；且对照已知答案 PR 有 hindsight 风险。
-- **未跑真实回归**：test4 codebase 是修复前快照，但未在修复后 codebase 上复跑确认「定位消失」，仅靠 PR 对照，非闭环。
+- **未跑真实回归**：test4/test5 codebase 都是修复前快照，未在修复后 codebase 上复跑确认「定位消失」，仅靠 PR 对照，非闭环。
 
-**下一步可补**：找一个「问题难 + 原始长日志」的 case（如服务端通用文本日志 + 跨多文件根因），同时考验 triage 与回溯深度。
+**下一步可补**：test5 部分补上「native/南向 + 难」方向（但仍 log 截断 + 根因未钉死）。真正闭环需找一个 native case 带**全 tombstone**（能逐指令符号化偏移、钉死行 + 真凶），或一个「问题难 + 原始长日志」的服务端文本日志 case。
 
 ---
 
