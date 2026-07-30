@@ -38,12 +38,12 @@
 | 命令 | 编排 | 模式 |
 |---|---|---|
 | `/entry` | 路由：分类意图 → 建议对应命令 | 主会话 |
-| `/diag` | log-parser → wiki-reader → **code-tracer 写报告 → reviewer 独立审 → loop 最多 3 次 → 存疑点** → 报告 | subtask |
-| `/bug-trace` | wiki-reader → code-tracer → 报告 | subtask |
-| `/feature-design` | feature-planner → 设计交人审 | agent:feature-planner |
+| `/diag` | **CRG 门** → log-parser → wiki-reader → **code-tracer 写报告 → reviewer 独立审 → loop 最多 3 次 → 存疑点** → 报告 | subtask |
+| `/bug-trace` | **CRG 门** → wiki-reader → code-tracer → 报告 | subtask |
+| `/feature-design` | **CRG 门** → feature-planner → 设计交人审 | subtask |
 | `/graph-sync` | code-graph（build+wiki 子命令+sync） | agent:code-graph |
 | `/arch-doc` | code-graph（build+wiki）→ arch-writer 写架构文档 | subtask |
-| `/flow-doc` | flow-writer（沿 CRG flows 写业务流页 + error_index） | agent:flow-writer |
+| `/flow-doc` | **CRG 门** → flow-writer（沿 CRG flows 写业务流页 + error_index） | subtask |
 | `/exp-archive` | exp-writer（归档门只存 high + 写案例页） | agent:exp-writer |
 | `/exp-search` | wiki-reader（查索引 + 全文 + 验过期） | agent:wiki-reader |
 
@@ -68,18 +68,6 @@ last_sync_commit: <git -C <repo> rev-parse HEAD>
 5. `last_sync_commit` 刷新为当前 HEAD。
 
 **索引格式**：markdown 表格（小，可全量入上下文给 wiki-reader 检索）。禁 HTML 注释锚点。
-
-## 共享预检：CRG 新鲜度门（内联进 command）
-
-启动 `/diag` / `/bug-trace` / `/feature-design` / `/flow-doc` 时**在 command 内**确认 CRG 图新鲜（OpenCode 有 question 工具，可中途问用户）：
-1. `bash: code-review-graph status --repo <repo>` 判新鲜。
-2. 缺/过时 → question 问用户三选一，问询文本须写清后果：
-   - **build**：建图（首次/图库损坏）
-   - **update**：增量更新（图过时，代码已变）
-   - **不跑**：放弃本次定位（不建图，command 不继续）
-3. 用户选定后刷新图，再继续编排。
-
-`/graph-sync` / `/arch-doc` 自己会建图，不额外检查。
 
 ## 人审 checkpoint 是 command 边界
 
