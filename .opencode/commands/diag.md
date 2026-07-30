@@ -6,7 +6,12 @@ subtask: true
 
 按以下步骤编排，每步用 Task 工具调对应 subagent，中间结果留你这不要逐字回显给主会话，最后只返报告文件路径 + 一行结论：
 
-1. **CRG 新鲜度门（内联，可问用户）**：跑 `bash: code-review-graph status --repo <repo>`。缺/过时 → 用 question 工具问用户三选一：**build**（建图）/ **update**（增量更新）/ **不跑**（放弃本次定位，workflow 不启动）。选定后刷新图再继续。
+1. **CRG 新鲜度门（Bash CLI，不走 MCP——避免 RPC 超时）**：
+   - 跑 `bash: code-review-graph status --repo <repo>`。fresh → 继续。
+   - 缺/过时 → 用 question 工具问用户三选一：**build**（建图）/ **update**（增量更新）/ **不跑**（放弃本次定位，workflow 不启动）。
+   - build/update：跑 `bash: code-review-graph build --repo <repo>`（Bash 直跑，无 MCP RPC；全量建图含 flows）。
+     - 成功（`status` 转 fresh）→ 继续。
+     - **超时或报错**（大仓 build 超 Bash 工具超时阈值，或 build 失败）→ **中止 /diag**：返报错 + 提示「CRG 建图超时/失败，请先在 shell 手动跑 `code-review-graph build --repo <repo>` 完成建图，再重跑 /diag」。**不继续**后续步骤。
 
 2. **压日志**：Task 调 `log-parser` subagent。传日志路径 + 格式（auto/harmony/generic）。要它跑 `logscope-triage <file> --top 50 --json --profile diag --log-format <fmt>`，返 digest（claimed_error / anchors / symbols / fault_frames / preview）。
 
