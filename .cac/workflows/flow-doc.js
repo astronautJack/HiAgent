@@ -1,14 +1,27 @@
-// flow-doc — 生成业务流 wiki：flow-writer 沿 CRG flows 取执行流→按生命周期分组→写页+error_index
-// CRG 新鲜度由会话在启动前确认
+// flow-doc — 生成业务流 wiki：CRG 门 → flow-writer 沿 CRG flows 取执行流→按生命周期分组→写页+error_index
+// CRG 门由 phase 1 调 code-graph（自动建图，无问询）
 export const meta = {
   name: 'flow-doc',
   description: '生成业务流 wiki（调用链+错误目录，给 diag 当直达电梯）',
   whenToUse: '用户要为代码仓生成业务流 wiki。传 args {repo, outDir?, flowPrefix?}。CRG 图须新鲜。',
-  phases: [{ title: 'Write', detail: 'flow-writer 生成业务流页 + error_index' }],
+  phases: [
+    { title: 'CRG', detail: 'code-graph 判新鲜/自动建图' },
+    { title: 'Write', detail: 'flow-writer 生成业务流页 + error_index' },
+  ],
 }
 
 export default async function ({ agent, phase, log, args }) {
   const { repo, outDir = '.', flowPrefix } = args
+
+  phase('CRG')
+  const crg = await agent(
+    `CRG 门：status 判新鲜→{ok:true}；缺/过时→自动 build（Bash CLI，不走 MCP，全量含 flows，不 skip），超时/报错→{ok:false,error}。repo: ${repo}。`,
+    { agentType: 'code-graph', schema: { type: 'object', required: ['ok'], properties: { ok: { type: 'boolean' }, error: { type: 'string' } } }, label: 'crg-gate' }
+  )
+  if (!crg.ok) {
+    log(`CRG gate aborted: ${crg.error || ''}`)
+    return { aborted: true, error: crg.error }
+  }
 
   phase('Write')
   const result = await agent(
