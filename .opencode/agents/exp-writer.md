@@ -37,7 +37,7 @@ permission:
 2. Read `<wiki>/cases/index.md` → 追加条目 → Write 回去。
 3. 更新 `<wiki>/README.md` 统计。
 
-**案例页 frontmatter**（在共享 Wiki 约定基础上加经验字段）：
+**案例页 frontmatter**（在「Wiki 约定」基线上加经验字段）：
 ```yaml
 id: <slug>
 title: <人类可读>
