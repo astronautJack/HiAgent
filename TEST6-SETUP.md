@@ -14,34 +14,25 @@
 
 ### 1.2 uv + CRG + logscope-triage
 
-> **内网无外网？** 按内网情况选一种装法：
+> **本分支自带离线安装包**（`vendor/` 目录），无需外网。
 
-**方式 A：内网已有（最快）**
+```bash
+bash vendor/install-offline.sh
+```
+
+脚本自动：
+1. 拷 `vendor/uv`（standalone 二进制）→ `~/.local/bin/uv`
+2. 从 `vendor/wheels/` 装 `code-review-graph`（79 个 wheel，~39MB）
+3. 从 `tools/` + `vendor/wheels/` 装 `logscope-triage`
+
+验证：
 ```bash
 uv --version
 code-review-graph --version
-logscope-triage --help    # 应有 --json
-```
-全通 → 跳到 §2。
-
-**方式 B：内网 PyPI mirror**
-```bash
-pip install uv -i https://<内网-pypi-mirror>/simple
-uv tool install code-review-graph -i https://<内网-pypi-mirror>/simple
-cd tools && uv tool install . -i https://<内网-pypi-mirror>/simple && cd ..
+logscope-triage --help
 ```
 
-**方式 C：离线 wheel（完全无网）**
-```bash
-# 外网机器：
-pip download uv code-review-graph -d /tmp/wheels/
-cd tools && pip download . -d /tmp/wheels/ && cd ..
-# 拷 /tmp/wheels/ 到内网
-# 内网机器：
-pip install uv --no-index --find-links /path/to/wheels/
-uv tool install code-review-graph --no-index --find-links /path/to/wheels/
-cd tools && uv tool install . --no-index --find-links /path/to/wheels/ && cd ..
-```
+> **目标平台**：Linux x86_64（wheel 按 cp312/manylinux 下载）。其他平台需自行补 wheel。
 
 ### 1.3 PATH
 ```bash
@@ -220,10 +211,14 @@ HiAgent/（opencode-test6-setup 分支）
 ├── .opencode/
 │   ├── agents/              # 12 subagent（含 code-graph CRG 门 + code-tracer + reviewer + log-parser + wiki 生产者 + feature 流水线）
 │   └── commands/            # 9 命令（diag/bug-trace/feature-design/flow-doc/arch-doc 有 subtask:false + 编排契约）
-├── AGENTS.md                # opencode 项目指令（两层架构 + workflow 表 + Wiki 约定已搬进 producer）
+├── AGENTS.md                # opencode 项目指令
 ├── opencode.json            # 项目配置（CRG MCP + 权限）——**跑前用 test6/opencode.json 覆盖（加 web-deny）**
-├── README.md                # HiAgent 安装 + 使用说明
+├── README.md
 ├── tools/                   # logscope-triage CLI 源
+├── vendor/                  # **离线安装包（无外网可用）**
+│   ├── uv                   # uv standalone binary (~63MB)
+│   ├── wheels/              # CRG + logscope-triage 依赖 wheel (~39MB, 79 个)
+│   └── install-offline.sh   # 一键离线安装脚本
 ├── test6/
 │   ├── log/
 │   │   └── rnscreens-pullTransaction-sigsegv.log   # 崩溃日志
