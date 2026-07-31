@@ -1,9 +1,12 @@
 ---
 description: 日志报错定位（log → 代码行 + 证据链；code-tracer 写报告，独立 reviewer 审 + loop）
+subtask: false
 ---
 定位日志报错到代码行。参数：$ARGUMENTS（日志路径 + 代码仓路径 [+ wiki 路径]）
 
-按以下步骤编排，每步用 Task 工具调对应 subagent，最后产出报告文件 + 一行结论：
+> 你是主会话编排者。禁止把整条 workflow 委派给单个 subagent（subagent 无 Task 工具，会断链）。
+> 必须按步骤逐个用 Task 工具调对应 subagent——每步一次 Task 调用，
+> 中间 digest/上下文留在本会话上下文里串起来，最后只返报告。
 
 1. **CRG 新鲜度门**：Task 调 `code-graph`（全程判新鲜/问询/建图/报错）。`{ok:true}`→继续 step 2；`{ok:false}`→workflow 中止（code-graph 已返 error + 提示），不继续。
 

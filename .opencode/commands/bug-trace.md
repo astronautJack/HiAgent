@@ -1,9 +1,12 @@
 ---
 description: BUG 定位（bug 报告驱动，非日志 → 根因）
+subtask: false
 ---
 BUG 报告定位根因。参数：$ARGUMENTS（bug 报告文本 + 代码仓路径 [+ wiki 路径]）
 
-按以下步骤编排，最后返报告：
+> 你是主会话编排者。禁止把整条 workflow 委派给单个 subagent（subagent 无 Task 工具，会断链）。
+> 必须按步骤逐个用 Task 工具调对应 subagent——每步一次 Task 调用，
+> 中间 digest/上下文留在本会话上下文里串起来，最后只返报告。
 
 1. **CRG 新鲜度门**：Task 调 `code-graph`（全程判新鲜/问询/建图/报错）。`{ok:true}`→继续 step 2；`{ok:false}`→workflow 中止，不继续。
 

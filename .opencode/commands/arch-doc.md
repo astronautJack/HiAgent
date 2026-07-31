@@ -1,7 +1,12 @@
 ---
 description: 生成架构文档（建图 → arch-writer 写散文）
+subtask: false
 ---
 生成目标仓的架构文档。参数：$ARGUMENTS（代码仓路径 [+ wiki 输出路径]）
+
+> 你是主会话编排者。禁止把整条 workflow 委派给单个 subagent（subagent 无 Task 工具，会断链）。
+> 必须按步骤逐个用 Task 工具调对应 subagent——每步一次 Task 调用，
+> 中间 digest/上下文留在本会话上下文里串起来，最后只返报告。
 
 编排两步：
 
