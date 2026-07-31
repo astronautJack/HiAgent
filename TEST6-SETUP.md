@@ -12,21 +12,38 @@
 ### 1.1 opencode
 内网已装 opencode（`opencode` 命令可用）。
 
-### 1.2 uv + CRG（代码调用图）
-```bash
-curl -LsSf https://astral.sh/install.sh | sh   # 装 uv
-uv tool install code-review-graph                # 装 CRG
-code-review-graph --version                     # 验证
-```
+### 1.2 uv + CRG + logscope-triage
 
-### 1.3 logscope-triage CLI（日志压缩）
-本仓 `tools/` 目录：
+> **内网无外网？** 按内网情况选一种装法：
+
+**方式 A：内网已有（最快）**
 ```bash
-cd tools && uv tool install . && cd ..
+uv --version
+code-review-graph --version
 logscope-triage --help    # 应有 --json
 ```
+全通 → 跳到 §2。
 
-### 1.4 PATH
+**方式 B：内网 PyPI mirror**
+```bash
+pip install uv -i https://<内网-pypi-mirror>/simple
+uv tool install code-review-graph -i https://<内网-pypi-mirror>/simple
+cd tools && uv tool install . -i https://<内网-pypi-mirror>/simple && cd ..
+```
+
+**方式 C：离线 wheel（完全无网）**
+```bash
+# 外网机器：
+pip download uv code-review-graph -d /tmp/wheels/
+cd tools && pip download . -d /tmp/wheels/ && cd ..
+# 拷 /tmp/wheels/ 到内网
+# 内网机器：
+pip install uv --no-index --find-links /path/to/wheels/
+uv tool install code-review-graph --no-index --find-links /path/to/wheels/
+cd tools && uv tool install . --no-index --find-links /path/to/wheels/ && cd ..
+```
+
+### 1.3 PATH
 ```bash
 export PATH="$HOME/.local/bin:$PATH"   # 永久：写进 ~/.bashrc
 ```
