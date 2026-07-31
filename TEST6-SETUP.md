@@ -14,30 +14,28 @@
 
 ### 1.2 uv + CRG + logscope-triage
 
-> **本分支自带离线安装包**（`vendor/` 目录），无需外网。
+> **本分支自带离线安装包**（`vendor/` 目录），无需外网。  
+> **目标平台：Windows x86_64 / Python 3.12**
 
-```bash
-bash vendor/install-offline.sh
+**安装：** 在 PowerShell 里：
+```powershell
+cd <项目根目录>
+powershell -ExecutionPolicy Bypass -File vendor\install-offline.ps1
 ```
 
 脚本自动：
-1. 拷 `vendor/uv`（standalone 二进制）→ `~/.local/bin/uv`
-2. 从 `vendor/wheels/` 装 `code-review-graph`（79 个 wheel，~39MB）
-3. 从 `tools/` + `vendor/wheels/` 装 `logscope-triage`
+1. 拷 `vendor\uv.exe`（standalone 二进制）→ `%USERPROFILE%\.local\bin\uv.exe`
+2. 从 `vendor\wheels-win\` 装 `code-review-graph`（80 个 wheel，~34MB）
+3. 从 `tools\` + `vendor\wheels-win\` 装 `logscope-triage`
 
 验证：
-```bash
+```powershell
 uv --version
 code-review-graph --version
 logscope-triage --help
 ```
 
-> **目标平台**：Linux x86_64（wheel 按 cp312/manylinux 下载）。其他平台需自行补 wheel。
-
-### 1.3 PATH
-```bash
-export PATH="$HOME/.local/bin:$PATH"   # 永久：写进 ~/.bashrc
-```
+> **PATH**：确保 `%USERPROFILE%\.local\bin` 在系统 PATH（加到环境变量）。脚本临时加了，重启终端后可能需要手动加。
 
 ---
 
@@ -215,10 +213,11 @@ HiAgent/（opencode-test6-setup 分支）
 ├── opencode.json            # 项目配置（CRG MCP + 权限）——**跑前用 test6/opencode.json 覆盖（加 web-deny）**
 ├── README.md
 ├── tools/                   # logscope-triage CLI 源
-├── vendor/                  # **离线安装包（无外网可用）**
-│   ├── uv                   # uv standalone binary (~63MB)
-│   ├── wheels/              # CRG + logscope-triage 依赖 wheel (~39MB, 79 个)
-│   └── install-offline.sh   # 一键离线安装脚本
+├── vendor/                  # **离线安装包（Windows，无外网可用）**
+│   ├── uv.exe               # uv standalone binary for Windows (~?)
+│   ├── wheels-win/          # CRG + logscope-triage 依赖 wheel (Windows win_amd64, ~34MB, 80 个)
+│   ├── install-offline.ps1   # PowerShell 一键离线安装脚本
+│   └── install-offline.sh   # Linux 版（备用）
 ├── test6/
 │   ├── log/
 │   │   └── rnscreens-pullTransaction-sigsegv.log   # 崩溃日志
