@@ -14,28 +14,27 @@
 
 ### 1.2 uv + CRG + logscope-triage
 
-> **本分支自带离线安装包**（`vendor/` 目录），无需外网。  
-> **目标平台：Windows x86_64 / Python 3.12**
+> 前提：`uv` 已在 PATH（内网已装好）。
 
-**安装：** 在 PowerShell 里：
+**一键安装（含离线 fallback）：**
 ```powershell
 cd <项目根目录>
 powershell -ExecutionPolicy Bypass -File vendor\install-offline.ps1
 ```
 
-脚本自动：
-1. 拷 `vendor\uv.exe`（standalone 二进制）→ `%USERPROFILE%\.local\bin\uv.exe`
-2. 从 `vendor\wheels-win\` 装 `code-review-graph`（80 个 wheel，~34MB）
-3. 从 `tools\` + `vendor\wheels-win\` 装 `logscope-triage`
+脚本优先 `uv tool install` 直装（PyPI 通了就走）；失败则走 `vendor\wheels-win\` 离线 wheel。
+
+**或手动：**
+```powershell
+uv tool install code-review-graph
+cd tools; uv tool install .; cd ..
+```
 
 验证：
 ```powershell
-uv --version
 code-review-graph --version
 logscope-triage --help
 ```
-
-> **PATH**：确保 `%USERPROFILE%\.local\bin` 在系统 PATH（加到环境变量）。脚本临时加了，重启终端后可能需要手动加。
 
 ---
 
