@@ -38,7 +38,6 @@ const probe = {
 
 const trace = {
   schema_version: 'hiagent.trace.v1',
-  report_path: 'C:\\repo\\.hiagent\\runs\\run\\report.md',
   root_cause: { file: 'src/a.js', line: 7, symbol: 'run', summary: 'bad state', confidence: 'high' },
   evidence: [{ kind: 'code', ref: 'src/a.js:7', claim: 'bad state begins here' }],
   impact: ['caller'],
@@ -57,7 +56,8 @@ test('diag runs canonical pipeline and returns reviewed root cause', async () =>
     'wiki-probe': probe,
     'wiki-search': { matches: [], total: 0 },
     'trace-1': trace,
-    'review-1': { verdict: 'pass', findings: [], verified_claims: ['src/a.js:7'] },
+    'review-1': { verdict: 'pass', independent_summary: 'bad state at src/a.js:7', contradictions: [], findings: [], verified_claims: ['src/a.js:7'] },
+    'report-writer': { written: true, report_path: 'C:\\repo\\.hiagent\\runs\\diag\\report.md', error: '' },
   })
 
   const result = await diag({ ...h.context, args: { repo: 'C:\\repo', logPath: 'C:\\logs\\a.log' } })
@@ -65,6 +65,7 @@ test('diag runs canonical pipeline and returns reviewed root cause', async () =>
   assert.equal(result.aborted, false)
   assert.equal(result.root_cause.file, 'src/a.js')
   assert.equal(result.review.consensus, true)
+  assert.equal(h.calls.at(-1).options.agentType, 'trace-report-writer')
   assert.deepEqual(h.phases, ['Validate', 'CRG', 'Triage', 'Knowledge', 'Trace', 'Review', 'Report'])
 })
 
@@ -94,9 +95,10 @@ test('bug trace carries reviewer findings into a second trace attempt', async ()
     'wiki-probe': probe,
     'wiki-search': { matches: [], total: 0 },
     'trace-1': trace,
-    'review-1': { verdict: 'revise', findings: ['line mismatch'], verified_claims: [] },
+    'review-1': { verdict: 'revise', independent_summary: 'different line', contradictions: ['line mismatch'], findings: ['line mismatch'], verified_claims: [] },
     'trace-2': trace,
-    'review-2': { verdict: 'pass', findings: [], verified_claims: ['fixed'] },
+    'review-2': { verdict: 'pass', independent_summary: 'agrees after recheck', contradictions: [], findings: [], verified_claims: ['fixed'] },
+    'report-writer': { written: true, report_path: 'C:\\repo\\.hiagent\\runs\\bug\\report.md', error: '' },
   })
 
   const result = await bugTrace({ ...h.context, args: { repo: 'C:\\repo', report: 'button fails' } })
@@ -104,6 +106,8 @@ test('bug trace carries reviewer findings into a second trace attempt', async ()
   assert.equal(result.review.consensus, true)
   assert.equal(h.calls.filter(call => call.options.label.startsWith('trace-')).length, 2)
   assert.match(h.calls.find(call => call.options.label === 'trace-2').prompt, /line mismatch/)
+  assert.equal(h.calls.find(call => call.options.label === 'review-1').options.agentType, 'code-tracer-reviewer')
+  assert.equal(h.calls.find(call => call.options.label === 'report-writer').options.agentType, 'trace-report-writer')
 })
 
 test('feature implementation refuses to edit without explicit approval', async () => {
@@ -143,6 +147,10 @@ test('feature design uses wiki only as bounded candidate context', async () => {
   const result = await featureDesign({ ...h.context, args: { repo: 'C:\\repo', requirement: 'add x' } })
   assert.equal(result.aborted, false)
   assert.equal(result.design.schema_version, 'hiagent.feature-design.v1')
+  assert.match(result.ask_user, /是否批准/)
+  assert.equal(result.handoff.on_approve.workflow, 'feature-implement')
+  assert.equal(result.handoff.on_approve.args.approved, true)
+  assert.equal(result.handoff.on_approve.design_source.includes('原样传递'), true)
 })
 
 test('experience archive fails closed when wiki write cannot be verified', async () => {

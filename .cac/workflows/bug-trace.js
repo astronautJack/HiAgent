@@ -7,9 +7,9 @@ export const meta = {
     { title: 'Validate', detail: '校验输入' },
     { title: 'CRG', detail: '确保图新鲜' },
     { title: 'Knowledge', detail: '检索权限内历史经验' },
-    { title: 'Trace', detail: '根因回溯' },
-    { title: 'Review', detail: '独立审阅，最多三轮' },
-    { title: 'Report', detail: '交付人审' },
+    { title: 'Trace', detail: '独立 investigator 根因回溯' },
+    { title: 'Review', detail: '隔离上下文的对抗式复核，最多三轮' },
+    { title: 'Report', detail: '第三个 subagent 仅渲染报告' },
   ],
 }
 
@@ -18,9 +18,9 @@ const PROBE_SCHEMA = { type: 'object', additionalProperties: false, required: ['
 const SEARCH_SCHEMA = { type: 'object', additionalProperties: false, required: ['matches', 'total'], properties: { matches: { type: 'array', items: { type: 'object' } }, total: { type: 'integer' } } }
 const TRACE_SCHEMA = {
   type: 'object', additionalProperties: false,
-  required: ['schema_version', 'report_path', 'root_cause', 'evidence', 'impact', 'fix', 'open_questions'],
+  required: ['schema_version', 'root_cause', 'evidence', 'impact', 'fix', 'open_questions'],
   properties: {
-    schema_version: { type: 'string', enum: ['hiagent.trace.v1'] }, report_path: { type: 'string' },
+    schema_version: { type: 'string', enum: ['hiagent.trace.v1'] },
     root_cause: { type: 'object', additionalProperties: false, required: ['file', 'line', 'symbol', 'summary', 'confidence'], properties: { file: { type: 'string' }, line: { type: 'integer' }, symbol: { type: 'string' }, summary: { type: 'string' }, confidence: { type: 'string', enum: ['high', 'medium', 'low'] } } },
     evidence: { type: 'array', items: { type: 'object', additionalProperties: false, required: ['kind', 'ref', 'claim'], properties: { kind: { type: 'string', enum: ['log', 'code', 'crg', 'config', 'wiki'] }, ref: { type: 'string' }, claim: { type: 'string' } } } },
     impact: { type: 'array', items: { type: 'string' } },
@@ -29,9 +29,14 @@ const TRACE_SCHEMA = {
   },
 }
 const VERDICT_SCHEMA = {
-  type: 'object', additionalProperties: false, required: ['verdict', 'findings', 'verified_claims'],
-  properties: { verdict: { type: 'string', enum: ['pass', 'revise'] }, findings: { type: 'array', items: { type: 'string' } }, verified_claims: { type: 'array', items: { type: 'string' } } },
+  type: 'object', additionalProperties: false, required: ['verdict', 'independent_summary', 'contradictions', 'findings', 'verified_claims'],
+  properties: {
+    verdict: { type: 'string', enum: ['pass', 'revise'] }, independent_summary: { type: 'string' },
+    contradictions: { type: 'array', items: { type: 'string' } }, findings: { type: 'array', items: { type: 'string' } },
+    verified_claims: { type: 'array', items: { type: 'string' } },
+  },
 }
+const REPORT_SCHEMA = { type: 'object', additionalProperties: false, required: ['written', 'report_path', 'error'], properties: { written: { type: 'boolean' }, report_path: { type: 'string' }, error: { type: 'string' } } }
 
 function isWindowsAbsolutePath(value) {
   return typeof value === 'string' && (/^[A-Za-z]:[\\/]/.test(value) || /^\\\\[^\\/]+[\\/][^\\/]+(?:[\\/]|$)/.test(value))
@@ -70,18 +75,18 @@ export default async function ({ agent, phase, log, args = {} }) {
   }
 
   let trace = null
-  let verdict = { verdict: 'revise', findings: [], verified_claims: [] }
+  let verdict = { verdict: 'revise', independent_summary: '', contradictions: [], findings: [], verified_claims: [] }
   let consensus = false
   for (let attempt = 1; attempt <= 3; attempt++) {
     phase('Trace')
-    trace = await agent(`先执行 hiagent-run prepare，再定位并写报告。输入=${JSON.stringify({ repo, runId, symptom: report, knowledge, reportPath, reviewer_findings: verdict.findings })}`, {
+    trace = await agent(`你是独立 investigator，只定位并返回结构化 trace，禁止写报告。输入=${JSON.stringify({ repo, symptom: report, knowledge, reviewer_findings: [...verdict.findings, ...verdict.contradictions] })}`, {
       agentType: 'code-tracer', schema: TRACE_SCHEMA, label: `trace-${attempt}`,
     })
-    if (!isWindowsAbsolutePath(trace.report_path) || !isWithinRepo(repo, trace.report_path) || !isSafeRelativePath(trace.root_cause.file)) {
-      return { aborted: true, stage: 'trace-contract', error: 'trace 返回了仓外报告路径或非法源码相对路径' }
+    if (!isSafeRelativePath(trace.root_cause.file)) {
+      return { aborted: true, stage: 'trace-contract', error: 'trace 返回了非法源码相对路径' }
     }
     phase('Review')
-    verdict = await agent(`独立审阅。输入=${JSON.stringify({ repo, symptom: report, trace, reportPath })}`, {
+    verdict = await agent(`你是隔离上下文的 adversarial reviewer。报告尚未生成；先独立调查，再核验 trace。输入=${JSON.stringify({ repo, symptom: report, trace })}`, {
       agentType: 'code-tracer-reviewer', schema: VERDICT_SCHEMA, label: `review-${attempt}`,
     })
     if (verdict.verdict === 'pass') { consensus = true; break }
@@ -89,10 +94,16 @@ export default async function ({ agent, phase, log, args = {} }) {
   }
 
   phase('Report')
+  const reportResult = await agent(`只把已结束的调查与复核结果渲染到报告，禁止改变结论。输入=${JSON.stringify({ repo, runId, reportPath, symptom: report, trace, verdict, consensus })}`, {
+    agentType: 'trace-report-writer', schema: REPORT_SCHEMA, label: 'report-writer',
+  })
+  if (!reportResult.written || !isWindowsAbsolutePath(reportResult.report_path) || !isWithinRepo(repo, reportResult.report_path)) {
+    return { aborted: true, stage: 'report', error: reportResult.error || '报告未写入 repo 运行目录' }
+  }
   return {
-    aborted: false, run_id: runId, report_path: trace.report_path, root_cause: trace.root_cause,
+    aborted: false, run_id: runId, report_path: reportResult.report_path, root_cause: trace.root_cause,
     evidence: trace.evidence, fix: trace.fix,
-    open_questions: [...trace.open_questions, ...(consensus ? [] : verdict.findings)],
+    open_questions: [...trace.open_questions, ...(consensus ? [] : [...verdict.findings, ...verdict.contradictions])],
     review: { consensus, ...verdict }, wiki: { available: wiki.available, matches: knowledge.total },
     next: '请人工审阅报告；确认根因和验证结果后再运行 exp-archive。',
   }

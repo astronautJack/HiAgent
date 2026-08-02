@@ -6,21 +6,27 @@ HiAgent 是 workflow kit，不是通用 agent 市场。它只保留三条闭环�
 
 分层依据是“上层 kit 依赖稳定接口，下层实现可替换”：
 
-```text
-用例 workflow
-├─ diag / bug-trace
-├─ feature-design / feature-implement
-└─ exp-search / exp-archive
-        │
-        ├─ 领域 kit agent
-        │   ├─ trace + independent review
-        │   ├─ plan + code + review + test
-        │   └─ experience curation
-        │
-        └─ 接口 agent
-            ├─ code-graph → CRG CLI / read-only MCP
-            ├─ log-parser → logscope-triage
-            └─ wiki-gateway → wiki-mcp
+```mermaid
+%%{init: {"theme":"base","flowchart":{"curve":"basis","nodeSpacing":18,"rankSpacing":28},"themeVariables":{"fontFamily":"Segoe UI, Microsoft YaHei, sans-serif"}}}%%
+flowchart TB
+    U([用户]):::human
+    C["CodeAgent<br/>codeagent · .cac/"]:::runtime
+    W["<b>上层：Workflow Kit</b><br/>diag · bug-trace<br/>feature-design · feature-implement<br/>exp-search · exp-archive"]:::workflow
+    K["<b>领域 Subagents</b><br/>investigator → adversarial reviewer → report writer<br/>planner → coder → reviewer → tester<br/>experience curator"]:::kit
+    I["<b>下层：接口 Subagents</b><br/>code-graph<br/>log-parser<br/>wiki-gateway"]:::interface
+    B["<b>基础能力</b><br/>CRG CLI / read-only MCP<br/>Drain3 / Harmony parser<br/>wiki-mcp"]:::system
+    R[(代码仓 · 日志 · 公司 Wiki)]:::data
+
+    U --> C --> W --> K --> I --> B --> R
+    W -. 直接编排接口能力 .-> I
+
+    classDef human fill:#FFF7ED,stroke:#EA580C,color:#7C2D12,stroke-width:2px;
+    classDef runtime fill:#EEF2FF,stroke:#4F46E5,color:#312E81,stroke-width:2px;
+    classDef workflow fill:#EFF6FF,stroke:#2563EB,color:#1E3A8A,stroke-width:2px;
+    classDef kit fill:#F5F3FF,stroke:#7C3AED,color:#4C1D95,stroke-width:2px;
+    classDef interface fill:#ECFDF5,stroke:#059669,color:#064E3B,stroke-width:2px;
+    classDef system fill:#F0FDFA,stroke:#0F766E,color:#134E4A,stroke-width:2px;
+    classDef data fill:#F8FAFC,stroke:#475569,color:#0F172A,stroke-width:2px;
 ```
 
 ## 依赖方向
@@ -39,26 +45,45 @@ Wiki 分类不是代码接口：`.cac/wiki-targets.json` 保存可变的 categor
 
 ### 诊断
 
-```text
-validate → CRG gate → digest → wiki search → trace ⇄ review → human review
+```mermaid
+flowchart TB
+    V[校验输入] --> G[CRG freshness gate]
+    G --> E[日志 digest / Bug 症状 + Wiki 候选]
+    E --> I["investigator 独立上下文<br/>只产出结构化 trace"]
+    I --> R["adversarial reviewer 独立上下文<br/>先独立判断，再核验 trace"]
+    R -- revise，最多三轮 --> I
+    R -- pass 或达到上限 --> W["report writer 第三个上下文<br/>只渲染，不改变结论"]
+    W --> H[人工审阅]
 ```
 
-review 最多三轮。未达一致时返回所有 open questions，不通过措辞掩盖分歧。
+review 最多三轮。报告在复核结束前不存在；未达一致时 writer 必须醒目标记争议并返回所有 open questions，不通过措辞掩盖分歧。
 
 ### 代码生成
 
-```text
-design → human approval → code → CRG refresh → review → test
-                              ↑                    │
-                              └──── feedback ──────┘
+```mermaid
+flowchart TB
+    D[feature-design 生成结构化设计] --> Q{询问用户是否批准}
+    Q -- 否 / 修改 --> S[停止或重新设计]
+    Q -- 明确批准 --> I[feature-implement]
+    I --> C[coder]
+    C --> G[CRG CLI refresh]
+    G --> R[独立 reviewer]
+    R --> T[tester]
+    T -- revise / fail，最多三轮 --> C
+    T -- pass --> O[交付未提交改动]
 ```
 
-最多三轮。任何阶段失败都保留工作区，但不 commit/push。
+`feature-design` 返回 `ask_user` 和结构化 handoff；CodeAgent 必须在下一步询问用户。只有明确批准后，才把同一份 design 原样交给 `feature-implement`。实现闭环最多三轮，任何阶段失败都保留工作区，但不 commit/push。
 
 ### 经验沉淀
 
-```text
-human confirmed result → quality gate → page contract → wiki probe → upsert → readback verify
+```mermaid
+flowchart TB
+    H[人工确认结果] --> Q[质量门]
+    Q --> P[页面契约]
+    P --> M[wiki-mcp probe]
+    M --> U[按配置路由并 upsert]
+    U --> R[回读并核验父位置与内容]
 ```
 
 “写请求成功”不等于“归档成功”；只有回读核验通过才返回 `archived=true`。

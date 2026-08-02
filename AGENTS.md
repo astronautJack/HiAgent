@@ -28,16 +28,16 @@
 
 | agent | 领域职责 |
 |---|---|
-| `code-tracer` / `code-tracer-reviewer` | 根因定位与独立验证 |
+| `code-tracer` / `code-tracer-reviewer` / `trace-report-writer` | 隔离上下文的根因定位、对抗复核、报告渲染 |
 | `feature-planner/coder/reviewer/tester` | 设计、实现、审查、门禁 |
 | `experience-curator` | 经验质量门和知识页生成 |
 
 ## Workflow 边界
 
-- `diag` / `bug-trace` 返回报告后必须人审；不直接改源码。
-- `feature-design` 与 `feature-implement` 分开，后者要求 `approved=true` 和版本化设计。
+- `diag` / `bug-trace` 的 investigator、reviewer、report writer 必须是三个独立 subagent；报告在复核结束后才生成，返回后仍须人审。
+- `feature-design` 返回 `ask_user` 和 handoff；用户明确批准后，才把同一份版本化设计原样传给要求 `approved=true` 的 `feature-implement`。
 - `exp-archive` 要求 `humanConfirmed=true`，并且写后回读核验。
-- workflow 不能中途等待用户；需人工决策时返回明确 `next`。
+- workflow 不能在单次 JS 调用中暂停等待用户；需人工决策时返回 `ask_user` 和可恢复的结构化 handoff，由 CodeAgent 在下一轮继续。
 
 ## Windows 路径
 

@@ -22,7 +22,7 @@ test('every workflow is an importable ESM module with metadata', async () => {
 test('agent frontmatter uses one CodeAgent-compatible style', async () => {
   const directory = new URL('../.cac/agents/', import.meta.url)
   const files = (await readdir(directory)).filter(name => name.endsWith('.md'))
-  assert.equal(files.length, 10)
+  assert.equal(files.length, 11)
   for (const file of files) {
     const content = await readFile(new URL(file, directory), 'utf8')
     const frontmatter = content.split('---')[1]
@@ -47,4 +47,21 @@ test('wiki categories and routes are data-driven', async () => {
   const workflow = await readFile(new URL('../.cac/workflows/exp-archive.js', import.meta.url), 'utf8')
   assert.doesNotMatch(workflow, /log_experience|code_logic|code_summary/)
   assert.match(workflow, /target: \{ route:/)
+})
+
+
+test('trace investigation review and report writing use isolated roles', async () => {
+  const investigator = await readFile(new URL('../.cac/agents/code-tracer.md', import.meta.url), 'utf8')
+  const reviewer = await readFile(new URL('../.cac/agents/code-tracer-reviewer.md', import.meta.url), 'utf8')
+  const writer = await readFile(new URL('../.cac/agents/trace-report-writer.md', import.meta.url), 'utf8')
+  assert.doesNotMatch(investigator.split('---')[1], /Write|Edit/)
+  assert.doesNotMatch(reviewer.split('---')[1], /Write|Edit/)
+  assert.match(writer.split('---')[1], /tools: Write, Bash/)
+
+  for (const file of ['diag.js', 'bug-trace.js']) {
+    const workflow = await readFile(new URL(`../.cac/workflows/${file}`, import.meta.url), 'utf8')
+    assert.match(workflow, /agentType: 'code-tracer'/)
+    assert.match(workflow, /agentType: 'code-tracer-reviewer'/)
+    assert.match(workflow, /agentType: 'trace-report-writer'/)
+  }
 })

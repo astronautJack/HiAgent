@@ -41,7 +41,6 @@ workflow 之间只传版本化结构。字段变化必须升级 `schema_version`
 ```json
 {
   "schema_version": "hiagent.trace.v1",
-  "report_path": "C:\\repo\\.hiagent\\runs\\diag-1\\report.md",
   "root_cause": {"file":"src/a.cpp","line":42,"symbol":"Start","summary":"状态首次偏离","confidence":"high"},
   "evidence": [{"kind":"log|code|crg|config|wiki","ref":"src/a.cpp:42","claim":"..."}],
   "impact": ["..."],
@@ -50,7 +49,7 @@ workflow 之间只传版本化结构。字段变化必须升级 `schema_version`
 }
 ```
 
-报告 Markdown 与结构化 trace 必须表达同一结论；reviewer 独立核验结构化 claim。
+`hiagent.trace.v1` 只由 investigator 生成，不含报告路径。adversarial reviewer 在独立上下文中先形成自己的判断，再核验结构化 claim；最后 `trace-report-writer` 在第三个上下文中把已结束的 trace/verdict 渲染到运行目录。writer 不得改变结论。
 
 ## `hiagent.feature-design.v1`
 
@@ -66,7 +65,7 @@ workflow 之间只传版本化结构。字段变化必须升级 `schema_version`
 }
 ```
 
-只有该契约且 `approved=true` 才能进入 `feature-implement`。
+`feature-design` 返回该契约的同时返回 `ask_user` 和 `hiagent.workflow-handoff.v1`。只有用户明确批准，且 CodeAgent 把本次 design 原样传递并设置 `approved=true`，才能进入 `feature-implement`。
 
 ## `hiagent.experience.v1`
 

@@ -51,5 +51,24 @@ export default async function ({ agent, phase, log, args = {} }) {
   if (!design.changes.every(change => isSafeRelativePath(change.file))) {
     return { aborted: true, stage: 'design-contract', error: '设计包含仓外或非法相对路径' }
   }
-  return { aborted: false, requirement, repo, design, wiki: { available: probe.available, matches: knowledge.total }, next: '请人工审阅；批准后把 design 原样传给 feature-implement，并设置 approved=true。' }
+  const approvalQuestion = '设计已经完成。是否批准按此设计进入 feature-implement，开始修改代码并执行独立审查和测试？'
+  return {
+    aborted: false,
+    requirement,
+    repo,
+    design,
+    wiki: { available: probe.available, matches: knowledge.total },
+    ask_user: approvalQuestion,
+    handoff: {
+      schema_version: 'hiagent.workflow-handoff.v1',
+      status: 'awaiting_user_approval',
+      question: approvalQuestion,
+      on_approve: {
+        workflow: 'feature-implement',
+        args: { repo, approved: true },
+        design_source: '本次 feature-design 返回值中的 design，必须原样传递',
+      },
+      on_reject: '保留设计，不修改代码；根据用户意见重新运行 feature-design 或结束。',
+    },
+  }
 }

@@ -2,7 +2,7 @@
 export const meta = {
   name: 'feature-implement',
   description: '按人工批准的设计实现代码并完成独立审查和测试门禁',
-  whenToUse: '传 args {repo, design, approved:true}；必须先完成人审',
+  whenToUse: '用户明确批准 feature-design 返回的 handoff 后，原样传 args {repo, design, approved:true}',
   phases: [{ title: 'Gate', detail: '确认人工批准与设计契约' }, { title: 'Implement', detail: '实现或修订' }, { title: 'Graph', detail: 'CLI 增量刷新代码图' }, { title: 'Review', detail: '独立代码审查' }, { title: 'Test', detail: '运行质量门禁' }, { title: 'Result', detail: '交付未提交改动' }],
 }
 

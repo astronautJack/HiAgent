@@ -38,7 +38,7 @@ export default async function ({ agent, phase, workflow, log, args }) {
     `- exp-archive：归档案例\n` +
     `- exp-search：检索历史案例（"这错见过吗"）\n\n` +
     `- wiki-health：检查内网 wiki-mcp 是否已经可用\n\n` +
-    `模糊（confidence=low）→ 给 clarifying_question。涉及目标代码的 workflow，repo 必须是 Windows 绝对路径；wiki-health 无参数，exp-search 的 repo 可选。feature-implement 只有拿到已批准设计时才能分类命中。`,
+    `模糊（confidence=low）→ 给 clarifying_question。涉及目标代码的 workflow，repo 必须是 Windows 绝对路径；wiki-health 无参数，exp-search 的 repo 可选。feature-design 返回 ask_user/handoff 后必须询问用户；只有用户明确批准，并把该结果中的 design 原样传入时，feature-implement 才能分类命中。`,
     { schema: INTENT_SCHEMA, label: 'classify' }
   )
 
