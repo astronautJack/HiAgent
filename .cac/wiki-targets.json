@@ -1,0 +1,32 @@
+{
+  "schema_version": "hiagent.wiki-targets.v2",
+  "base_url": "REPLACE_WITH_INTERNAL_WIKI_BASE_URL",
+  "categories": [
+    {
+      "key": "code_summary",
+      "name": "REPLACE_WITH_EXACT_CODE_SUMMARY_FOLDER_NAME",
+      "description": "代码结构、模块职责和代码概览"
+    },
+    {
+      "key": "code_logic",
+      "name": "REPLACE_WITH_EXACT_CODE_LOGIC_FOLDER_NAME",
+      "description": "代码逻辑分析、设计与实现经验"
+    },
+    {
+      "key": "log_experience",
+      "name": "REPLACE_WITH_EXACT_LOG_EXPERIENCE_FOLDER_NAME",
+      "description": "日志定位、根因与修复验证经验"
+    },
+    {
+      "key": "other",
+      "name": "REPLACE_WITH_EXACT_OTHER_FOLDER_NAME",
+      "description": "无法归入其他分类的已验证知识"
+    }
+  ],
+  "routes": {
+    "diag": "log_experience",
+    "bug-trace": "log_experience",
+    "feature-implement": "code_logic",
+    "default": "other"
+  }
+}

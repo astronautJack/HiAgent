@@ -1,60 +1,99 @@
-// bug-trace — BUG 定位：CRG 门 → wiki-reader 取预期 → code-tracer 回溯 → 报告
-// CRG 门由 phase 1 调 code-graph（自动建图，无问询）
+// bug-trace — 非日志症状定位，与 diag 共用 trace/review 契约
 export const meta = {
   name: 'bug-trace',
-  description: 'BUG 定位（bug 报告驱动，非日志）',
-  whenToUse: '用户给了 bug 报告/失败现象（非日志），要找根因。传 args {report, repo, wiki?}。CRG 图须新鲜。',
+  description: '从 bug 报告定位到代码根因行并独立审阅',
+  whenToUse: '传 args {report, repo, reportPath?}',
   phases: [
-    { title: 'CRG', detail: 'code-graph 判新鲜/自动建图' },
-    { title: 'Read', detail: 'wiki-reader 取预期行为' },
-    { title: 'Trace', detail: 'code-tracer 反向回溯' },
-    { title: 'Report', detail: '根因报告' },
+    { title: 'Validate', detail: '校验输入' },
+    { title: 'CRG', detail: '确保图新鲜' },
+    { title: 'Knowledge', detail: '检索权限内历史经验' },
+    { title: 'Trace', detail: '根因回溯' },
+    { title: 'Review', detail: '独立审阅，最多三轮' },
+    { title: 'Report', detail: '交付人审' },
   ],
 }
 
+const GATE_SCHEMA = { type: 'object', additionalProperties: false, required: ['ok', 'error', 'warning'], properties: { ok: { type: 'boolean' }, error: { type: 'string' }, warning: { type: 'string' } } }
+const PROBE_SCHEMA = { type: 'object', additionalProperties: false, required: ['available', 'server', 'capabilities', 'error'], properties: { available: { type: 'boolean' }, server: { type: 'string' }, capabilities: { type: 'object' }, error: { type: 'string' } } }
+const SEARCH_SCHEMA = { type: 'object', additionalProperties: false, required: ['matches', 'total'], properties: { matches: { type: 'array', items: { type: 'object' } }, total: { type: 'integer' } } }
 const TRACE_SCHEMA = {
   type: 'object', additionalProperties: false,
-  required: ['file', 'line', 'confidence', 'evidence'],
+  required: ['schema_version', 'report_path', 'root_cause', 'evidence', 'impact', 'fix', 'open_questions'],
   properties: {
-    file: { type: 'string' }, line: { type: 'integer' },
-    confidence: { type: 'string', enum: ['high', 'medium', 'low'] },
-    evidence: { type: 'array', items: { type: 'object', properties: { kind: { type: 'string' }, ref: { type: 'string' } } } },
-    fixSuggestion: { type: 'string' },
+    schema_version: { type: 'string', enum: ['hiagent.trace.v1'] }, report_path: { type: 'string' },
+    root_cause: { type: 'object', additionalProperties: false, required: ['file', 'line', 'symbol', 'summary', 'confidence'], properties: { file: { type: 'string' }, line: { type: 'integer' }, symbol: { type: 'string' }, summary: { type: 'string' }, confidence: { type: 'string', enum: ['high', 'medium', 'low'] } } },
+    evidence: { type: 'array', items: { type: 'object', additionalProperties: false, required: ['kind', 'ref', 'claim'], properties: { kind: { type: 'string', enum: ['log', 'code', 'crg', 'config', 'wiki'] }, ref: { type: 'string' }, claim: { type: 'string' } } } },
+    impact: { type: 'array', items: { type: 'string' } },
+    fix: { type: 'object', additionalProperties: false, required: ['summary', 'changes'], properties: { summary: { type: 'string' }, changes: { type: 'array', items: { type: 'object', additionalProperties: false, required: ['file', 'description'], properties: { file: { type: 'string' }, description: { type: 'string' } } } } } },
+    open_questions: { type: 'array', items: { type: 'string' } },
   },
 }
+const VERDICT_SCHEMA = {
+  type: 'object', additionalProperties: false, required: ['verdict', 'findings', 'verified_claims'],
+  properties: { verdict: { type: 'string', enum: ['pass', 'revise'] }, findings: { type: 'array', items: { type: 'string' } }, verified_claims: { type: 'array', items: { type: 'string' } } },
+}
 
-export default async function ({ agent, phase, log, args }) {
-  const { report, repo, wiki } = args
+function isWindowsAbsolutePath(value) {
+  return typeof value === 'string' && (/^[A-Za-z]:[\\/]/.test(value) || /^\\\\[^\\/]+[\\/][^\\/]+(?:[\\/]|$)/.test(value))
+}
+function hasTraversal(value) { return value.split(/[\\/]/).includes('..') }
+function normalizePath(value) { return value.replace(/\//g, '\\').replace(/\\+$/, '').toLowerCase() }
+function isWithinRepo(repo, value) {
+  return isWindowsAbsolutePath(repo) && isWindowsAbsolutePath(value) && !hasTraversal(value) && normalizePath(value).startsWith(`${normalizePath(repo)}\\`)
+}
+function repoPath(repo, ...parts) { return [repo.replace(/[\\/]+$/, ''), ...parts].join('\\') }
+function isSafeRelativePath(value) { return typeof value === 'string' && value.trim() !== '' && !isWindowsAbsolutePath(value) && !hasTraversal(value) }
+
+export default async function ({ agent, phase, log, args = {} }) {
+  const { report, repo } = args
+  phase('Validate')
+  if (!isWindowsAbsolutePath(repo) || hasTraversal(repo)) return { aborted: true, stage: 'validate', error: 'repo 必须是 Windows 绝对路径' }
+  if (typeof report !== 'string' || !report.trim()) return { aborted: true, stage: 'validate', error: 'report 不能为空' }
+  const runId = `bug-${Date.now()}`
+  const reportPath = args.reportPath || repoPath(repo, '.hiagent', 'runs', runId, 'report.md')
+  if (!isWindowsAbsolutePath(reportPath) || !isWithinRepo(repo, reportPath)) return { aborted: true, stage: 'validate', error: 'reportPath 必须位于 repo 内' }
 
   phase('CRG')
-  const crg = await agent(
-    `CRG 门：status 判新鲜→{ok:true}；缺/过时→自动 build（Bash CLI，不走 MCP，全量含 flows，不 skip），超时/报错→{ok:false,error}。repo: ${repo}。`,
-    { agentType: 'code-graph', schema: { type: 'object', required: ['ok'], properties: { ok: { type: 'boolean' }, error: { type: 'string' } } }, label: 'crg-gate' }
-  )
-  if (!crg.ok) {
-    log(`CRG gate aborted: ${crg.error || ''}`)
-    return { aborted: true, error: crg.error }
+  const gate = await agent(`确保当前代码图新鲜。repo=${JSON.stringify(repo)}。`, {
+    agentType: 'code-graph', schema: GATE_SCHEMA, label: 'crg-gate',
+  })
+  if (!gate.ok) return { aborted: true, stage: 'crg', error: gate.error }
+  if (gate.warning) log(gate.warning)
+
+  phase('Knowledge')
+  const wiki = await agent('执行 probe，探测 wiki-mcp。', { agentType: 'wiki-gateway', schema: PROBE_SCHEMA, label: 'wiki-probe' })
+  let knowledge = { matches: [], total: 0 }
+  if (wiki.available && wiki.capabilities.search) {
+    knowledge = await agent(`执行 search。输入=${JSON.stringify({ query: { report, repo }, limit: 8 })}`, {
+      agentType: 'wiki-gateway', schema: SEARCH_SCHEMA, label: 'wiki-search',
+    })
   }
 
-  phase('Read')
-  let context = null
-  if (wiki) {
-    context = await agent(
-      `读 ${wiki} 取预期行为与涉及模块。bug 报告："${report}"。用报告里的符号当信号匹配索引。`,
-      { agentType: 'wiki-reader', label: 'wiki' }
-    )
-  } else {
-    log('提示：本仓无 wiki，本次定位无历史经验加持；可先跑 /arch-doc、/flow-doc 生成后再定位')
+  let trace = null
+  let verdict = { verdict: 'revise', findings: [], verified_claims: [] }
+  let consensus = false
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    phase('Trace')
+    trace = await agent(`先执行 hiagent-run prepare，再定位并写报告。输入=${JSON.stringify({ repo, runId, symptom: report, knowledge, reportPath, reviewer_findings: verdict.findings })}`, {
+      agentType: 'code-tracer', schema: TRACE_SCHEMA, label: `trace-${attempt}`,
+    })
+    if (!isWindowsAbsolutePath(trace.report_path) || !isWithinRepo(repo, trace.report_path) || !isSafeRelativePath(trace.root_cause.file)) {
+      return { aborted: true, stage: 'trace-contract', error: 'trace 返回了仓外报告路径或非法源码相对路径' }
+    }
+    phase('Review')
+    verdict = await agent(`独立审阅。输入=${JSON.stringify({ repo, symptom: report, trace, reportPath })}`, {
+      agentType: 'code-tracer-reviewer', schema: VERDICT_SCHEMA, label: `review-${attempt}`,
+    })
+    if (verdict.verdict === 'pass') { consensus = true; break }
+    log(`第 ${attempt} 轮需修订：${verdict.findings.join('；')}`)
   }
 
-  phase('Trace')
   phase('Report')
-  const trace = await agent(
-    `BUG 报告："${report}"\nrepo: ${repo}（CRG 图已新鲜）\n${context ? 'wiki 预期: ' + JSON.stringify(context) : '无 wiki'}\n` +
-    `从报告里的症状符号沿 CRG callers_of 反向回溯到偏离点，定位 file:line 根因 + 证据链 + 修复建议。`,
-    { agentType: 'code-tracer', schema: TRACE_SCHEMA, label: 'trace' }
-  )
-  log(`Root cause: ${trace.file}:${trace.line}, confidence=${trace.confidence}`)
-
-  return { repo, wiki, ...trace }
+  return {
+    aborted: false, run_id: runId, report_path: trace.report_path, root_cause: trace.root_cause,
+    evidence: trace.evidence, fix: trace.fix,
+    open_questions: [...trace.open_questions, ...(consensus ? [] : verdict.findings)],
+    review: { consensus, ...verdict }, wiki: { available: wiki.available, matches: knowledge.total },
+    next: '请人工审阅报告；确认根因和验证结果后再运行 exp-archive。',
+  }
 }

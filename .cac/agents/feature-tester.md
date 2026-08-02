@@ -12,6 +12,8 @@ tools: Read, Bash, Glob
 
 按目标仓**自动发现**构建/测试命令（Read `package.json`/`build.gradle`/`CMakeLists`/`BUILD`/`Makefile` 等），依次跑：lint → typecheck（若有）→ unit test → build。失败 → 报错给调用方回 coder 修复，循环至全绿。
 
+返回 `{verdict: "pass|fail", commands: [{command,status,summary}], failures: [...]}`。未发现测试时不得算全绿，应在 failures 中明确列出缺失门禁。
+
 ## 约束
 
 - 只跑命令 + 报结果，不改代码（tools 不含 Write/Edit）。

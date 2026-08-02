@@ -14,9 +14,8 @@ const INTENT_SCHEMA = {
   required: ['workflow', 'args', 'confidence'],
   properties: {
     workflow: { type: 'string', enum: [
-      'diag', 'bug-trace', 'feature-design',
-      'graph-sync', 'arch-doc', 'flow-doc',
-      'exp-archive', 'exp-search',
+      'diag', 'bug-trace', 'feature-design', 'feature-implement',
+      'exp-archive', 'exp-search', 'wiki-health',
     ] },
     args: { type: 'object' },
     confidence: { type: 'string', enum: ['high', 'low'] },
@@ -34,13 +33,12 @@ export default async function ({ agent, phase, workflow, log, args }) {
     `workflow 与判据：\n` +
     `- diag：用户给了【日志文件/日志文本】，要定位到代码行\n` +
     `- bug-trace：用户给了【bug 报告/失败现象（非日志）】，要找根因\n` +
-    `- feature-design：用户要【实现需求/出设计】\n` +
-    `- graph-sync：生成结构 wiki（快，纯结构）\n` +
-    `- arch-doc：生成架构文档（可读，知识库级）\n` +
-    `- flow-doc：生成业务流 wiki（调用链+错误目录）\n` +
+    `- feature-design：用户提出需求，需要先出设计并人审\n` +
+    `- feature-implement：用户已明确批准 hiagent.feature-design.v1 设计，要开始改代码\n` +
     `- exp-archive：归档案例\n` +
     `- exp-search：检索历史案例（"这错见过吗"）\n\n` +
-    `模糊（confidence=low）→ 给 clarifying_question。args 里至少含 repo（绝对路径）。`,
+    `- wiki-health：检查内网 wiki-mcp 是否已经可用\n\n` +
+    `模糊（confidence=low）→ 给 clarifying_question。涉及目标代码的 workflow，repo 必须是 Windows 绝对路径；wiki-health 无参数，exp-search 的 repo 可选。feature-implement 只有拿到已批准设计时才能分类命中。`,
     { schema: INTENT_SCHEMA, label: 'classify' }
   )
 

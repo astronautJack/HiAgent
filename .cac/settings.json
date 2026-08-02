@@ -4,6 +4,8 @@
       "Bash(git *)",
       "Bash(code-review-graph *)",
       "Bash(logscope-triage *)",
+      "Bash(hiagent-crg *)",
+      "Bash(hiagent-run *)",
       "Bash(uv tool install *)",
       "Bash(uv tool upgrade *)",
       "Bash(uvx code-review-graph *)"
@@ -16,8 +18,12 @@
   },
   "mcpServers": {
     "crg": {
-      "command": "uvx",
-      "args": ["code-review-graph", "mcp"],
+      "command": "code-review-graph",
+      "args": [
+        "serve",
+        "--tools",
+        "get_minimal_context_tool,get_impact_radius_tool,get_review_context_tool,query_graph_tool,traverse_graph_tool,semantic_search_nodes_tool,list_graph_stats_tool,find_large_functions_tool,list_flows_tool,get_flow_tool,get_affected_flows_tool,list_communities_tool,get_community_tool,get_architecture_overview_tool,detect_changes_tool,get_hub_nodes_tool,get_bridge_nodes_tool,get_knowledge_gaps_tool,get_surprising_connections_tool,get_suggested_questions_tool"
+      ],
       "type": "stdio"
     }
   }

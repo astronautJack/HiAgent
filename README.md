@@ -1,155 +1,127 @@
 # HiAgent
 
-> 基于 CodeAgent 的解耦版 agent 工具集。按**能力层 + 用例编排层**组织——共享能力抽成 subagent，用例 workflow 纯编排。
+HiAgent 是面向公司 Windows CodeAgent 环境的工程工作流套件，集中解决三件事：
+
+1. **日志定位**：长日志先由 Drain3 压成有界结构，再沿 CRG 调用图定位根因代码行，并由独立 reviewer 复核。
+2. **代码生成**：先设计、人工批准，再执行 coder → CRG 增量刷新 → reviewer → tester 闭环；不自动提交或推送。
+3. **经验沉淀**：只有人工确认且验证充分的结果，才通过公司 `wiki-mcp` 幂等写入；检索范围和权限由 MCP 自动处理。
+
+本项目只支持 **Windows**，运行时目录为 `.cac/`，启动命令为 `codeagent`。
+
+## 架构
 
 ```mermaid
 flowchart TB
-    Sess["用户 / CodeAgent 会话"] --> Entry["智能路由 entry.js"]
-    Entry --> WFs["用例 workflow（8）<br/>━━━━━━━━━━━━<br/>分析定位：diag · bug-trace · feature-design<br/>wiki 生成：graph-sync · arch-doc · flow-doc<br/>经验：exp-archive · exp-search"]
-    WFs --> Shared["共享能力（5）<br/>code-graph · wiki-reader<br/>code-tracer · code-tracer-reviewer · log-parser"]
-    WFs --> Producers["Wiki 生产者（3）<br/>arch · flow · exp-writer"]
-    WFs --> Pipeline["feature 流水线（4）<br/>planner · coder · reviewer · tester"]
-    Shared --> CRG[("CRG<br/>code-review-graph")]
-    Shared --> CLI[("logscope-triage CLI<br/>Drain3 + 鸿蒙 parser")]
-    Producers --> Wiki[("Wiki<br/>Markdown 知识库")]
-    Wiki --> ATH[("私有向量数据库<br/>RAG 检索 ⏳")]
+    U[用户 / CodeAgent] --> W[用例 workflow]
+    W --> I[接口能力层]
+    W --> K[领域 kit 层]
+
+    I --> CRG[code-graph<br/>CLI mutation / MCP query]
+    I --> LOG[log-parser<br/>Drain3 + Harmony parser]
+    I --> WIKI[wiki-gateway<br/>wiki-mcp 防腐层]
+
+    K --> TRACE[code-tracer + reviewer]
+    K --> FEATURE[planner + coder + reviewer + tester]
+    K --> EXP[experience-curator]
+
+    CRG --> CODE[(目标代码仓)]
+    LOG --> RAW[(原始日志)]
+    WIKI --> CORP[(公司 Wiki)]
 ```
 
-## 核心能力
+workflow 只做状态机与结构化数据传递；subagent 负责底层能力和领域判断。wiki-mcp 的具体工具名只允许 `wiki-gateway` 知道。
 
-**1. 日志定位——丢日志进去，出代码行**
+## Windows 安装
 
-把客户日志丢进来，自动压缩提关键信号，沿代码调用图反向回溯，定位到**具体哪一行代码**有问题，附证据链（日志行号 + `文件:行` + 调用链）。鸿蒙日志（hilog / HiSysEvent / 崩溃栈）开箱即用；长日志不爆上下文（先压成有界摘要，只回读关键行段）。定位给的是根因，不是转发症状。
-
-**2. 经验沉淀——解决过的 case 存下来，下次一查就命中**
-
-每次定位 / 解决完，一键归档成经验页（问题 / 根因 / 证据 / 修复），自动建索引。下次遇到类似问题，查一下就命中旧经验——新人也能直接查到老 case，不靠"问老人"。后续接私有向量数据库（向量 RAG 检索），从"关键词查"升级到"语义查"。
-
-## 为什么用 workflow 编排（相比 agent / skill）
-
-CodeAgent 的 workflow 把编排逻辑写成 JS 脚本后台跑，相比用 agent 或 skill turn-by-turn 安排工作流：
-
-- **中间结果留脚本变量，不进会话上下文**——长任务（多步回溯、批量生成 wiki）不撑爆会话，会话只收最终结果
-- **编排代码化，确定可复现**——循环 / 分支 / 扇出写在 JS 里，不是靠 LLM 即兴决定；同一输入跑出同一编排路径
-- **后台跑，会话保持响应**——不用等整个长任务跑完才能继续问别的
-- **结构化输出校验**——`agent(prompt, {schema})` 校验 + 重试，下游 phase 拿到的数据形状可靠，不用 fragile 正则解析
-- **并行 / 流水线原语**——`parallel()` / `pipeline()` 扇出，比 turn-by-turn 顺序快
-
-## 解决的痛点
-
-1. 学习门槛高 → `entry` 路由按意图自动分发，不用记每个用法
-2. 能力重复 → code-tracer / wiki-reader / code-graph 跨用例复用，不复制
-3. 经验不沉淀 → exp-writer 归档 + wiki-reader 检索
-
-## 两层架构
-
-```
-第 1 层：共享能力（跨 workflow 复用）
-  code-graph · wiki-reader · code-tracer · log-parser
-
-第 2 层：专职 subagent（各被特定 workflow 调）
-  Wiki 生产者：arch-writer · flow-writer · exp-writer
-  feature 流水线：feature-planner · feature-coder · feature-reviewer · feature-tester
-```
-
-用例 workflow（9 个）纯编排第 1/2 层能力，不含可复用逻辑。
-
-## 结构
-
-```
-HiAgent/
-├── .cac/
-│   ├── agents/            # 11 subagent（4 共享 + 3 wiki 生产者 + 4 feature 流水线）
-│   ├── workflows/         # 9 workflow（entry + 8 用例）
-│   └── settings.json      # 权限 + CRG MCP
-├── tools/
-│   ├── src/logscope_triage/  # logscope-triage CLI 源（Drain3 + 鸿蒙 parser）
-│   ├── test/                 # 单元测试 + 样本
-│   └── pyproject.toml
-├── AGENTS.md
-└── README.md
-```
-
-## 前置条件
-
-- **CodeAgent** ≥ v2.1.154（workflows 支持）
-- **uv** + **code-review-graph**（CRG）
-- **logscope-triage** CLI（装自 `tools/`）
-
-## 安装
-
-### Linux / macOS
-
-```bash
-# 1. 拿到本仓（只 clone codeagent 分支）
-git clone -b codeagent https://github.com/astronautJack/HiAgent.git HiAgent && cd HiAgent
-
-# 2. 装 uv（CRG + logscope-triage 用）
-curl -LsSf https://astral.sh/install.sh | sh
-
-# 3. 装 CRG（代码图）
-uv tool install code-review-graph
-
-# 4. 装 logscope-triage CLI（本仓 Python CLI）
-cd tools && uv tool install . && cd ..
-
-# 5. 确保 ~/.local/bin 在 PATH（uv 安装器通常已加）
-export PATH="$HOME/.local/bin:$PATH"   # 永久：写进 ~/.bashrc
-
-# 6. 验证
-code-review-graph --version            # 应出版本号
-logscope-triage --help                 # 应有 --json / --log-format
-
-# 7. 启动 CodeAgent（加载 .cac/ + AGENTS.md）
-codeagent
-```
-
-### Windows（PowerShell）
+前提：Git for Windows、CodeAgent，以及通过公司 `uv_install.psl` 安装好的 `uv`。
 
 ```powershell
-# 1. 拿到本仓（只 clone codeagent 分支）
-git clone -b codeagent https://github.com/astronautJack/HiAgent.git HiAgent; cd HiAgent
-
-# 2. 装 uv（CRG + logscope-triage 用）
-irm https://astral.sh/install.ps1 | iex
-
-# 3. 装 CRG（代码图）
-uv tool install code-review-graph
-
-# 4. 装 logscope-triage CLI（本仓 Python CLI）
-cd tools; uv tool install .; cd ..
-
-# 5. 确保 ~/.local/bin 在 PATH（uv 安装器通常已加；没加则手动加）
-$env:Path += ";$HOME\.local\bin"   # 当前会话；永久：系统环境变量里加 %USERPROFILE%\.local\bin
-
-# 6. 验证
-code-review-graph --version            # 应出版本号
-logscope-triage --help                 # 应有 --json / --log-format
-
-# 7. 启动 CodeAgent（加载 .cac/ + AGENTS.md）
+git clone -b codeagent https://github.com/astronautJack/HiAgent.git
+cd HiAgent
+.\scripts\install.ps1
+.\scripts\configure-wiki.ps1
 codeagent
 ```
 
-装完重启 CodeAgent 让 `settings.json` 的 CRG MCP 生效。改完 `.cac/` 或 `settings.json` 后也要重启。
+安装脚本只使用 `uv tool install` 下载并安装：
 
-## 使用说明
+- `code-review-graph`
+- 本仓的 `logscope-triage` 与 `hiagent-crg`
 
-### 自动路由（推荐）
+脚本不会下载 uv，也不配置 wiki token。公司 CodeAgent 会话应自动注入准确命名的 `wiki-mcp`。
 
+`configure-wiki.ps1` 要求填写 `base_url` 和当前配置中各分类的准确名称。gateway 让 wiki-mcp 从 base 导航到对应子位置，不拼接 URL。分类列表和来源路由完全在 `.cac/wiki-targets.json` 中配置，后续增删、改名或合并分类不需要改 workflow。任何页面都禁止直接写入 base。
+
+进入内网后的第一条 CodeAgent 命令：
+
+```text
+运行 wiki-health
 ```
-你：定位这个日志报错到代码行，日志 /path/to/log，代码仓 /path/to/repo
-→ entry 分类 → 启动 diag workflow → 返回报告交你审
+
+`ready=true` 表示检索、读取、写入能力均可用。探测是只读的，不创建测试页面。
+
+## 使用
+
+### 日志定位
+
+```text
+定位日志 C:\logs\player.log，代码仓 C:\src\player，格式 auto
 ```
 
-### 手动选 workflow
+对应 `diag`。首次默认使用 Drain3 `learn` 模式，按仓库积累模板；已有健康基线后可指定 `drainMode=inference`，将未命中模板突出为新信号。
 
-| 场景 | workflow |
-|---|---|
-| 日志报错定位 | `diag` |
-| bug 报告定位（非日志） | `bug-trace` |
-| 需求→设计 | `feature-design` |
-| 生成结构 wiki | `graph-sync` |
-| 生成架构文档 | `arch-doc` |
-| 生成业务流 wiki | `flow-doc` |
-| 归档案例 | `exp-archive` |
-| 检索历史经验 | `exp-search` |
+返回内容包括根因 `file:line`、日志/源码/图证据、影响面、修复建议、独立审阅结果和报告路径。人工确认并完成验证后再运行 `exp-archive`。
+
+### 代码生成
+
+```text
+为 C:\src\player 设计“增加播放超时重试”
+```
+
+先运行 `feature-design`。审阅返回的 `hiagent.feature-design.v1` 后，再明确批准并运行 `feature-implement`。实现过程最多三轮，只有 reviewer 与 tester 都通过才返回 `implemented=true`。
+
+### 经验检索与归档
+
+```text
+搜索历史上 START_FAIL 是怎么处理的
+```
+
+`exp-search` 会在当前用户有权限的 Wiki 范围内做有界检索。历史页面只作为候选，使用前必须与当前源码复核。
+
+归档必须同时满足：人工确认、高置信度、源码证据、验证证据、当前 commit 可获取。写入使用稳定 `external_id`，重复运行会更新同一页；回读核验失败时不会声称归档成功。
+
+## 大仓 CRG
+
+HiAgent **不会通过 MCP 建图**。所有 build、update、postprocess 都由本地 CLI 完成，MCP 仅保留短时只读查询工具。
+
+- 图不存在：小仓同步 build。
+- 超过 5000 个 tracked files：首次 build 转为 Windows 后台进程，避免 CodeAgent/MCP RPC 超时中断。
+- 图过时或工作区有改动：使用增量 update。
+- 后台状态和日志：`<repo>\.hiagent\crg-state.json`、`crg-build.log`。
+
+若 workflow 返回 `state=building`，无需重配；建图完成后原样重试即可。阈值和前台超时可用 `HIAGENT_CRG_LARGE_THRESHOLD`、`HIAGENT_CRG_TIMEOUT` 调整。
+
+大型仓库建议添加 `.code-review-graphignore`，排除已被 git 跟踪但不应进入图的生成物、vendor 和大型快照。
+
+## Workflow
+
+| workflow | 作用 | 人工边界 |
+|---|---|---|
+| `entry` | 模糊请求分类与分发 | 低置信时返回澄清问题 |
+| `wiki-health` | 只读探测 wiki-mcp | 无 |
+| `diag` | 日志 → 根因报告 → 独立复核 | 修复、归档前人审 |
+| `bug-trace` | 非日志 BUG → 根因报告 → 独立复核 | 修复、归档前人审 |
+| `feature-design` | 需求 → 结构化设计 | 必须审批 |
+| `feature-implement` | 已批准设计 → 实现/审查/测试 | 用户手动提交 |
+| `exp-search` | 权限内历史经验检索 | 当前源码复核 |
+| `exp-archive` | 质量门 → wiki-mcp 幂等写入 | 必须确认且有验证证据 |
+
+## 验证
+
+```powershell
+.\scripts\test.ps1
+```
+
+测试包括 workflow 状态机、日志契约、Harmony/Windows 路径解析、Drain3 masking、本次运行计数以及 CRG 大仓后台门禁。
+
+进一步说明见 [Windows 内网手工适配](docs/internal-adaptation-windows.md)、[架构](docs/architecture.md)、[数据契约](docs/contracts.md) 和 [CRG/Drain3 设计](docs/crg-drain3.md)。

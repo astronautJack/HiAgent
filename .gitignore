@@ -1,5 +1,6 @@
 # CRG 图库
 .code-review-graph/
+.hiagent/
 
 # Python / uv
 .venv/
