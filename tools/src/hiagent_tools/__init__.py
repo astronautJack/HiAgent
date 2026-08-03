@@ -1,2 +1,2 @@
-"""Deterministic helpers used by HiAgent workflows."""
+"""Deterministic helpers used by HiAgent skills."""
 

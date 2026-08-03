@@ -2,7 +2,7 @@
 
 ## 目标与取舍
 
-HiAgent 是 workflow kit，不是通用 agent 市场。它只保留三条闭环：诊断、代码实现、经验沉淀。旧版中本地 Markdown wiki、多个 writer、CRG 建图 prompt 和用例内重复检索都被移除。
+HiAgent 是 skill kit，不是通用 agent 市场。它只保留三条闭环：诊断、代码实现、经验沉淀。旧版中本地 Markdown wiki、多个 writer、CRG 建图 prompt 和用例内重复检索都被移除。
 
 分层依据是“上层 kit 依赖稳定接口，下层实现可替换”：
 
@@ -11,7 +11,7 @@ HiAgent 是 workflow kit，不是通用 agent 市场。它只保留三条闭环�
 flowchart TB
     U([用户]):::human
     C["CodeAgent<br/>codeagent · .cac/"]:::runtime
-    W["<b>上层：Workflow Kit</b><br/>diag · bug-trace<br/>feature-design · feature-implement<br/>exp-search · exp-archive"]:::workflow
+    W["<b>上层：Skill Kit</b><br/>diag · bug-trace<br/>feature-design · feature-implement<br/>exp-search · exp-archive"]:::skill
     K["<b>领域 Subagents</b><br/>investigator → adversarial reviewer → report writer<br/>planner → coder → reviewer → tester<br/>experience curator"]:::kit
     I["<b>下层：接口 Subagents</b><br/>code-graph<br/>log-parser<br/>wiki-gateway"]:::interface
     B["<b>基础能力</b><br/>CRG CLI / read-only MCP<br/>Drain3 / Harmony parser<br/>wiki-mcp"]:::system
@@ -22,7 +22,7 @@ flowchart TB
 
     classDef human fill:#FFF7ED,stroke:#EA580C,color:#7C2D12,stroke-width:2px;
     classDef runtime fill:#EEF2FF,stroke:#4F46E5,color:#312E81,stroke-width:2px;
-    classDef workflow fill:#EFF6FF,stroke:#2563EB,color:#1E3A8A,stroke-width:2px;
+    classDef skill fill:#EFF6FF,stroke:#2563EB,color:#1E3A8A,stroke-width:2px;
     classDef kit fill:#F5F3FF,stroke:#7C3AED,color:#4C1D95,stroke-width:2px;
     classDef interface fill:#ECFDF5,stroke:#059669,color:#064E3B,stroke-width:2px;
     classDef system fill:#F0FDFA,stroke:#0F766E,color:#134E4A,stroke-width:2px;
@@ -31,7 +31,7 @@ flowchart TB
 
 ## 依赖方向
 
-- workflow 可以调用接口 agent 和领域 agent。
+- skill 可以调用接口 agent 和领域 agent。
 - 领域 agent 可以使用当前源码、git 和 CRG 只读查询，但不能调用其他 agent。
 - 只有 `wiki-gateway` 直接接触 wiki-mcp。
 - 只有 `code-graph` 执行 CRG mutation。
@@ -39,7 +39,7 @@ flowchart TB
 
 这两个“唯一入口”是防腐层：内网 wiki-mcp 工具签名变化只改一个 agent；CRG 建图策略变化也只改一个 agent/CLI。
 
-Wiki 分类不是代码接口：`.cac/wiki-targets.json` 保存可变的 categories/routes。workflow 只传来源场景，gateway 从 base 导航到配置名称；增删、改名或合并目录不影响上层。
+Wiki 分类不是代码接口：`.cac/wiki-targets.json` 保存可变的 categories/routes。skill 只传来源场景，gateway 从 base 导航到配置名称；增删、改名或合并目录不影响上层。
 
 ## 三条状态机
 
@@ -98,4 +98,4 @@ flowchart TB
 
 ## 内网兼容假设
 
-仅依赖已知与 CodeAgent 一致的能力：`.js` workflow、`agent()`、`workflow()`、`phase()`、结构化 schema 和 `.cac/agents`。wiki-mcp 的权限由内网服务处理，不引入 token 配置。
+仅依赖已知与 CodeAgent 一致的能力：`.cac/skills/<name>/SKILL.md`、`skill` 工具按需加载、`agent()`、结构化 schema 和 `.cac/agents`。wiki-mcp 的权限由内网服务处理，不引入 token 配置。

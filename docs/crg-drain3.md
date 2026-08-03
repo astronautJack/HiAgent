@@ -12,7 +12,7 @@ CRG 的 mutation 和 query 有不同的时延/失败特征，因此明确分流�
 | 首次建图 | `build --repo` | 小仓同步；大仓由 `hiagent-crg` 启动 Windows 后台进程 |
 | 日常变更 | `update --repo` | 增量解析，包括 coder 改完后的 working tree |
 | 重算派生数据 | `postprocess --repo` | 只在需要重算 flows/communities/FTS 时使用 |
-| 持续维护 | `watch` / `daemon` | 可选运维，不由普通 workflow 改用户配置 |
+| 持续维护 | `watch` / `daemon` | 可选运维，不由普通 skill 改用户配置 |
 | 排除噪声 | `.code-review-graphignore` | 排除 tracked generated/vendor/snapshot |
 | 外置图库 | `--data-dir` | 网络盘或工作树不可写时采用 |
 

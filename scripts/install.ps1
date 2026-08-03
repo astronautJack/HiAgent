@@ -53,4 +53,4 @@ if (-not $WikiConfigured) {
     Write-Host "  1. Wiki 分类配置已填写"
 }
 Write-Host "  2. 在项目根目录运行 codeagent"
-Write-Host "  3. 运行 wiki-health；ready=true 后使用核心 workflow"
+Write-Host "  3. 运行 wiki-health；ready=true 后使用核心 skill"

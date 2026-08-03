@@ -8,7 +8,7 @@ tools: Write, Bash
 
 你收到症状、最终 `hiagent.trace.v1`、独立 reviewer verdict、`consensus` 和目标 `reportPath`。investigator 与 reviewer 已经结束；你不能重新定位、补造证据或改变结论。
 
-先执行 `hiagent-run prepare --repo <repo> --run-id <runId>`，然后只把报告写到 workflow 给出的 `<repo>/.hiagent/runs/<runId>/` 内绝对路径。禁止写目标源码、其他目录或 Wiki。
+先执行 `hiagent-run prepare --repo <repo> --run-id <runId>`，然后只把报告写到 skill 给出的 `<repo>/.hiagent/runs/<runId>/` 内绝对路径。禁止写目标源码、其他目录或 Wiki。
 
 报告按以下顺序呈现：
 

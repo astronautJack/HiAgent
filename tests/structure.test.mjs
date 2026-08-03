@@ -3,18 +3,22 @@ import { readdir, readFile } from 'node:fs/promises'
 import test from 'node:test'
 
 
-test('every workflow is an importable ESM module with metadata', async () => {
-  const directory = new URL('../.cac/workflows/', import.meta.url)
-  const files = (await readdir(directory)).filter(name => name.endsWith('.js')).sort()
-  assert.deepEqual(files, [
-    'bug-trace.js', 'diag.js', 'entry.js', 'exp-archive.js', 'exp-search.js',
-    'feature-design.js', 'feature-implement.js', 'wiki-health.js',
+test('every skill is a SKILL.md with name and description frontmatter', async () => {
+  const directory = new URL('../.cac/skills/', import.meta.url)
+  const entries = (await readdir(directory, { withFileTypes: true }))
+    .filter(entry => entry.isDirectory())
+    .map(entry => entry.name)
+    .sort()
+  assert.deepEqual(entries, [
+    'bug-trace', 'diag', 'entry', 'exp-archive', 'exp-search',
+    'feature-design', 'feature-implement', 'wiki-health',
   ])
-  for (const file of files) {
-    const module = await import(new URL(file, directory))
-    assert.equal(typeof module.default, 'function', file)
-    assert.equal(typeof module.meta?.name, 'string', file)
-    assert.ok(Array.isArray(module.meta?.phases), file)
+  for (const name of entries) {
+    const content = await readFile(new URL(`${name}/SKILL.md`, directory), 'utf8')
+    const frontmatter = content.split('---')[1]
+    assert.match(frontmatter, /\nname: /, `${name}/SKILL.md name`)
+    assert.match(frontmatter, /\ndescription: /, `${name}/SKILL.md description`)
+    assert.doesNotMatch(frontmatter, /\nmode:|\npermission:|\ntools:/, `${name}/SKILL.md no agent-only fields`)
   }
 })
 
@@ -44,9 +48,9 @@ test('wiki categories and routes are data-driven', async () => {
   assert.ok(config.routes.default)
   for (const key of Object.values(config.routes)) assert.ok(keys.has(key), `unknown category key: ${key}`)
 
-  const workflow = await readFile(new URL('../.cac/workflows/exp-archive.js', import.meta.url), 'utf8')
-  assert.doesNotMatch(workflow, /log_experience|code_logic|code_summary/)
-  assert.match(workflow, /target: \{ route:/)
+  const skill = await readFile(new URL('../.cac/skills/exp-archive/SKILL.md', import.meta.url), 'utf8')
+  assert.doesNotMatch(skill, /log_experience|code_logic|code_summary/)
+  assert.match(skill, /target:\s*\{\s*route\s*:/)
 })
 
 
@@ -58,10 +62,10 @@ test('trace investigation review and report writing use isolated roles', async (
   assert.doesNotMatch(reviewer.split('---')[1], /Write|Edit/)
   assert.match(writer.split('---')[1], /tools: Write, Bash/)
 
-  for (const file of ['diag.js', 'bug-trace.js']) {
-    const workflow = await readFile(new URL(`../.cac/workflows/${file}`, import.meta.url), 'utf8')
-    assert.match(workflow, /agentType: 'code-tracer'/)
-    assert.match(workflow, /agentType: 'code-tracer-reviewer'/)
-    assert.match(workflow, /agentType: 'trace-report-writer'/)
+  for (const name of ['diag', 'bug-trace']) {
+    const skill = await readFile(new URL(`../.cac/skills/${name}/SKILL.md`, import.meta.url), 'utf8')
+    assert.match(skill, /code-tracer/)
+    assert.match(skill, /code-tracer-reviewer/)
+    assert.match(skill, /trace-report-writer/)
   }
 })

@@ -86,7 +86,7 @@ _DRAIN3_KEY_TO_ATTR = {
     "parameter_extraction_cache_capacity": "parameter_extraction_cache_capacity",
 }
 
-# The JSON digest is passed to an LLM workflow. Keep every collection bounded.
+# The JSON digest is passed to an LLM skill. Keep every collection bounded.
 # The raw log remains the source of truth and can be read by line when needed.
 MAX_HISYSEVENTS = 200
 MAX_FAULT_FRAMES = 200
@@ -192,7 +192,7 @@ def _anchors(params):
 
 def build_digest(*, raw_file, log_format, drain_mode, line_count, clusters, hisysevents,
                  fault_frames, claimed_error, top, truncated):
-    """Build the single versioned contract consumed by HiAgent workflows."""
+    """Build the single versioned contract consumed by HiAgent skills."""
     selected_clusters = sorted(clusters.values(), key=lambda c: -c['run_count'])[:top]
     compact_clusters = [{
         'id': c['id'],

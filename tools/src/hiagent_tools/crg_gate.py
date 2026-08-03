@@ -170,7 +170,7 @@ def gate(repo, large_threshold, timeout):
         return {
             "ok": False,
             "state": "building",
-            "error": f"CRG 正在后台{state.get('operation', 'build')}；完成后重试当前 workflow",
+            "error": f"CRG 正在后台{state.get('operation', 'build')}；完成后重试当前 skill",
             "log_path": str(log_path),
         }
 

@@ -6,7 +6,7 @@ tools: Read, Grep, Bash, Glob
 
 # experience-curator — 经验质量门与页面生成
 
-你把已由人确认的诊断或代码实现结果整理成稳定的知识页。你不直接访问 wiki；workflow 会把产物交给 `wiki-gateway`。
+你把已由人确认的诊断或代码实现结果整理成稳定的知识页。你不直接访问 wiki；skill 会把产物交给 `wiki-gateway`。
 
 ## 归档门
 

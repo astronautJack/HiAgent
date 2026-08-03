@@ -12,7 +12,7 @@ tools: Read, Bash, Glob
 
 这条规则用于避免大代码库通过 MCP `build_or_update_graph_tool` 时被 RPC 超时杀死。
 
-## workflow 新鲜度门
+## skill 新鲜度门
 
 执行：
 
@@ -25,14 +25,14 @@ hiagent-crg gate --repo <绝对路径>
 - 图新鲜：立即返回 `{ok:true}`。
 - 已有图过时：本地 CLI 执行增量 `update`。
 - 小仓无图：本地 CLI 同步 `build`。
-- 大仓无图或前台超时：启动脱离 MCP/agent RPC 的后台 CLI build，状态与日志写到 `<repo>/.hiagent/`；返回 building，让用户稍后原样重试 workflow。
-- 失败：返回错误和日志路径，不允许 workflow 带着旧图继续。
+- 大仓无图或前台超时：启动脱离 MCP/agent RPC 的后台 CLI build，状态与日志写到 `<repo>/.hiagent/`；返回 building，让用户稍后原样重试 skill。
+- 失败：返回错误和日志路径，不允许 skill 带着旧图继续。
 
 把命令 JSON 归一成 `{ok:boolean,error:string,warning:string}`。building 时 `ok=false`，error 必须保留“后台建图后重试”和日志路径；无提示时 warning 为空字符串。
 
 实现阶段每次 coder 改完 working tree 后执行 `hiagent-crg refresh --repo <绝对路径>`，再让 reviewer 调 MCP 做影响分析。已跟踪文件中的新增或改名符号会进入图；同样禁止 MCP mutation。
 
-CRG 2.3.x 的 build/update 使用 Git 文件视图且没有 include-untracked 参数。`hiagent-crg` 会报告未跟踪源码但绝不代替用户 `git add`；reviewer 必须直接读取这些文件，等用户纳入版本控制后再 refresh。`ok=true,warning非空` 表示图更新成功但存在这类提示，必须原样传给 workflow 日志。
+CRG 2.3.x 的 build/update 使用 Git 文件视图且没有 include-untracked 参数。`hiagent-crg` 会报告未跟踪源码但绝不代替用户 `git add`；reviewer 必须直接读取这些文件，等用户纳入版本控制后再 refresh。`ok=true,warning非空` 表示图更新成功但存在这类提示，必须原样传给 skill 日志。
 
 ## CRG 能力选择
 
@@ -43,11 +43,11 @@ CRG 2.3.x 的 build/update 使用 Git 文件视图且没有 include-untracked �
 - `postprocess --repo`: 仅重算 flows、communities、FTS；可用 `--no-flows / --no-communities / --no-fts` 缩小范围。
 - `status --repo --json`: 唯一机器可读状态源。
 - `watch --repo`: 单仓开发期持续更新。
-- `daemon add/start/status`: 多仓长期维护；属于可选运维，不由普通 workflow 自动启用。
+- `daemon add/start/status`: 多仓长期维护；属于可选运维，不由普通 skill 自动启用。
 - `.code-review-graphignore`: 排除已被 git 跟踪但不应索引的 generated/vendor 大文件。
 - `--data-dir`: 网络盘或只读工作树需要把 SQLite 放到外部目录时使用。
 
-不在 workflow 中启用云 embedding。它可能发送源码派生信息且依赖内网模型配置；关键词/结构查询是默认安全路径。
+不在 skill 中启用云 embedding。它可能发送源码派生信息且依赖内网模型配置；关键词/结构查询是默认安全路径。
 
 ### MCP 只读查询
 

@@ -4,8 +4,8 @@
 
 ## 不变量
 
-- 保持 workflow 编排层 + subagent 能力层的双层设计。
-- workflow 只做校验、状态机、循环和结构化传值；可复用能力放 subagent。
+- 保持 skill 编排层 + subagent 能力层的双层设计。
+- skill 只做校验、状态机、循环和结构化传值；可复用能力放 subagent。编排逻辑写在 `.cac/skills/<name>/SKILL.md`，按需通过 `skill` 工具加载。
 - CRG mutation 只走本地 `hiagent-crg` / `code-review-graph` CLI；禁止通过 MCP 建图或更新。
 - CRG MCP 只用于短时、只读、带预算的导航查询；最终 claim 必须回读当前源码。
 - 公司知识库只通过服务名准确为 `wiki-mcp` 的 MCP 访问；具体工具签名只由 `wiki-gateway` 适配。
@@ -32,13 +32,13 @@
 | `feature-planner/coder/reviewer/tester` | 设计、实现、审查、门禁 |
 | `experience-curator` | 经验质量门和知识页生成 |
 
-## Workflow 边界
+## Skill 边界
 
 - `diag` / `bug-trace` 的 investigator、reviewer、report writer 必须是三个独立 subagent；报告在复核结束后才生成，返回后仍须人审。
 - `feature-design` 返回 `ask_user` 和 handoff；用户明确批准后，才把同一份版本化设计原样传给要求 `approved=true` 的 `feature-implement`。
 - `exp-archive` 要求 `humanConfirmed=true`，并且写后回读核验。
-- workflow 不能在单次 JS 调用中暂停等待用户；需人工决策时返回 `ask_user` 和可恢复的结构化 handoff，由 CodeAgent 在下一轮继续。
+- skill 不能在单步中暂停等待用户；需人工决策时返回 `ask_user` 和可恢复的结构化 handoff，由 CodeAgent 在下一轮继续。
 
 ## Windows 路径
 
-传入目标仓、日志和报告路径时使用绝对路径。workflow 接受盘符路径；产物统一放 `<repo>\.hiagent\runs\`，CRG 状态放 `<repo>\.hiagent\`。不要写用户未指定的仓外目录。
+传入目标仓、日志和报告路径时使用绝对路径。skill 接受盘符路径；产物统一放 `<repo>\.hiagent\runs\`，CRG 状态放 `<repo>\.hiagent\`。不要写用户未指定的仓外目录。

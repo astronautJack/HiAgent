@@ -15,7 +15,7 @@ HiAgent 是面向公司 Windows CodeAgent 环境的工程工作流套件，集�
 flowchart TB
     U([用户]):::human
     C["CodeAgent<br/><small>codeagent · .cac/</small>"]:::runtime
-    W["<b>用例 Workflow</b><br/>日志诊断 · Bug 定位<br/>功能设计 → 人工批准 → 实现<br/>经验检索 · 归档"]:::workflow
+    W["<b>用例 Skill</b><br/>日志诊断 · Bug 定位<br/>功能设计 → 人工批准 → 实现<br/>经验检索 · 归档"]:::skill
     K["<b>领域 Kit Subagents</b><br/>investigator → adversarial reviewer → report writer<br/>planner → coder → reviewer → tester<br/>experience curator"]:::kit
     I["<b>接口 Subagents</b><br/>code-graph · log-parser · wiki-gateway"]:::interface
     S["<b>底层系统</b><br/>CRG CLI / 只读 MCP<br/>Drain3 / Harmony Parser<br/>公司 wiki-mcp"]:::system
@@ -26,14 +26,14 @@ flowchart TB
 
     classDef human fill:#FFF7ED,stroke:#EA580C,color:#7C2D12,stroke-width:2px;
     classDef runtime fill:#EEF2FF,stroke:#4F46E5,color:#312E81,stroke-width:2px;
-    classDef workflow fill:#EFF6FF,stroke:#2563EB,color:#1E3A8A,stroke-width:2px;
+    classDef skill fill:#EFF6FF,stroke:#2563EB,color:#1E3A8A,stroke-width:2px;
     classDef kit fill:#F5F3FF,stroke:#7C3AED,color:#4C1D95,stroke-width:2px;
     classDef interface fill:#ECFDF5,stroke:#059669,color:#064E3B,stroke-width:2px;
     classDef system fill:#F0FDFA,stroke:#0F766E,color:#134E4A,stroke-width:2px;
     classDef data fill:#F8FAFC,stroke:#475569,color:#0F172A,stroke-width:2px;
 ```
 
-workflow 只做状态机与结构化数据传递；subagent 负责底层能力和领域判断。wiki-mcp 的具体工具名只允许 `wiki-gateway` 知道。
+skill 只做状态机与结构化数据传递；subagent 负责底层能力和领域判断。wiki-mcp 的具体工具名只允许 `wiki-gateway` 知道。
 
 ## Windows 安装
 
@@ -54,7 +54,7 @@ codeagent
 
 脚本不会下载 uv，也不配置 wiki token。公司 CodeAgent 会话应自动注入准确命名的 `wiki-mcp`。
 
-`configure-wiki.ps1` 要求填写 `base_url` 和当前配置中各分类的准确名称。gateway 让 wiki-mcp 从 base 导航到对应子位置，不拼接 URL。分类列表和来源路由完全在 `.cac/wiki-targets.json` 中配置，后续增删、改名或合并分类不需要改 workflow。任何页面都禁止直接写入 base。
+`configure-wiki.ps1` 要求填写 `base_url` 和当前配置中各分类的准确名称。gateway 让 wiki-mcp 从 base 导航到对应子位置，不拼接 URL。分类列表和来源路由完全在 `.cac/wiki-targets.json` 中配置，后续增删、改名或合并分类不需要改 skill。任何页面都禁止直接写入 base。
 
 进入内网后的第一条 CodeAgent 命令：
 
@@ -103,13 +103,13 @@ HiAgent **不会通过 MCP 建图**。所有 build、update、postprocess 都由
 - 图过时或工作区有改动：使用增量 update。
 - 后台状态和日志：`<repo>\.hiagent\crg-state.json`、`crg-build.log`。
 
-若 workflow 返回 `state=building`，无需重配；建图完成后原样重试即可。阈值和前台超时可用 `HIAGENT_CRG_LARGE_THRESHOLD`、`HIAGENT_CRG_TIMEOUT` 调整。
+若 skill 返回 `state=building`，无需重配；建图完成后原样重试即可。阈值和前台超时可用 `HIAGENT_CRG_LARGE_THRESHOLD`、`HIAGENT_CRG_TIMEOUT` 调整。
 
 大型仓库建议添加 `.code-review-graphignore`，排除已被 git 跟踪但不应进入图的生成物、vendor 和大型快照。
 
-## Workflow
+## Skill
 
-| workflow | 作用 | 人工边界 |
+| skill | 作用 | 人工边界 |
 |---|---|---|
 | `entry` | 模糊请求分类与分发 | 低置信时返回澄清问题 |
 | `wiki-health` | 只读探测 wiki-mcp | 无 |
@@ -126,6 +126,6 @@ HiAgent **不会通过 MCP 建图**。所有 build、update、postprocess 都由
 .\scripts\test.ps1
 ```
 
-测试包括 workflow 状态机、日志契约、Harmony/Windows 路径解析、Drain3 masking、本次运行计数以及 CRG 大仓后台门禁。
+测试包括 skill 编排契约、日志契约、Harmony/Windows 路径解析、Drain3 masking、本次运行计数以及 CRG 大仓后台门禁。
 
 进一步说明见 [Windows 内网手工适配](docs/internal-adaptation-windows.md)、[架构](docs/architecture.md)、[数据契约](docs/contracts.md) 和 [CRG/Drain3 设计](docs/crg-drain3.md)。

@@ -1,6 +1,6 @@
 # 数据契约
 
-workflow 之间只传版本化结构。字段变化必须升级 `schema_version` 并同步测试，不能让 agent 自由猜字段。
+skill 之间只传版本化结构。字段变化必须升级 `schema_version` 并同步测试，不能让 agent 自由猜字段。
 
 ## `hiagent.log-digest.v1`
 
@@ -65,7 +65,7 @@ workflow 之间只传版本化结构。字段变化必须升级 `schema_version`
 }
 ```
 
-`feature-design` 返回该契约的同时返回 `ask_user` 和 `hiagent.workflow-handoff.v1`。只有用户明确批准，且 CodeAgent 把本次 design 原样传递并设置 `approved=true`，才能进入 `feature-implement`。
+`feature-design` 返回该契约的同时返回 `ask_user` 和 `hiagent.skill-handoff.v1`。只有用户明确批准，且 CodeAgent 把本次 design 原样传递并设置 `approved=true`，才能进入 `feature-implement`。
 
 ## `hiagent.experience.v1`
 

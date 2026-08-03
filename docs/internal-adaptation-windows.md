@@ -30,7 +30,7 @@ git switch codeagent
 git pull
 ```
 
-确认存在 `.cac\settings.json`、`.cac\agents`、`.cac\workflows`。
+确认存在 `.cac\settings.json`、`.cac\agents`、`.cac\skills`。
 
 ## 3. 安装依赖
 
@@ -98,7 +98,7 @@ hiagent-run --help
 3. 确认所有 route 的值都能在 categories 中找到，key 和 name 都不能重复。
 4. 重新运行 `wiki-health`。
 
-无需修改 workflow、subagent 或 Python。`configure-wiki.ps1` 也不包含固定分类列表，它只处理 JSON 中已有的项目。
+无需修改 skill、subagent 或 Python。`configure-wiki.ps1` 也不包含固定分类列表，它只处理 JSON 中已有的项目。
 
 检查：
 
@@ -137,7 +137,7 @@ codeagent
 
 ## 6. wiki-mcp 工具签名变化时
 
-正常情况下 `wiki-gateway` 会根据服务名 `wiki-mcp` 的工具描述匹配 search/read/create/update/upsert，无需修改 workflow。
+正常情况下 `wiki-gateway` 会根据服务名 `wiki-mcp` 的工具描述匹配 search/read/create/update/upsert，无需修改 skill。
 
 若内部工具描述不充分而适配失败，只改一个文件：`.cac\agents\wiki-gateway.md`。在“工具发现”下补充内网文档中的准确映射，例如：
 
@@ -157,7 +157,7 @@ update:        <准确工具名>(page_id=<命中 id>, title=<title>, content=<co
 - 写前按 `external_id` 精确查重。
 - 写后 read 回查标题、external_id、正文摘要和父目录；无法确认分类则 `verified=false`。
 
-不要修改 `diag.js`、`feature-*.js` 或 `exp-archive.js` 去适配具体工具名，否则会重新产生耦合。
+不要修改 `diag`、`feature-design`、`feature-implement` 或 `exp-archive` 这些 skill 去适配具体工具名，否则会重新产生耦合。
 
 ## 7. CRG 大仓验收
 
@@ -192,7 +192,7 @@ vendor/**
 
 按以下顺序执行，容易定位问题：
 
-1. `.\scripts\test.ps1`：本地 workflow/Python 测试通过。
+1. `.\scripts\test.ps1`：本地 skill/Python 测试通过。
 2. `wiki-health`：MCP 与分类配置通过，只读、无页面副作用。
 3. `exp-search`：用一个已知 Wiki 标题确认权限内检索。
 4. `feature-design`：确认能读 CRG 和 Wiki，但不改代码。
@@ -209,7 +209,7 @@ vendor/**
 |---|---|
 | 找不到 uv | 先运行公司 `uv_install.psl`，重开 PowerShell |
 | 找不到 CLI | 检查 `%USERPROFILE%\.local\bin` 是否在 PATH |
-| CRG building | 等后台 CLI 完成，再原样重试 workflow |
+| CRG building | 等后台 CLI 完成，再原样重试 skill |
 | CRG update 慢 | 检查 `.code-review-graphignore` 和 tracked 生成物 |
 | wiki search 可用、write 不可用 | 检查占位符、routes，并确认 base 下能精确看到各分类名称 |
 | 页面写到错误分类 | 检查 `routes` 的来源场景与 category key 映射 |
