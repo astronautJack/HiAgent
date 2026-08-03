@@ -3,8 +3,12 @@ import test from 'node:test'
 import { readFile } from 'node:fs/promises'
 
 const skillsUrl = new URL('../.cac/skills/', import.meta.url)
+const agentsUrl = new URL('../.cac/agents/', import.meta.url)
 async function skill(name) {
   return readFile(new URL(`${name}/SKILL.md`, skillsUrl), 'utf8')
+}
+async function agent(name) {
+  return readFile(new URL(`${name}.md`, agentsUrl), 'utf8')
 }
 
 const PROBE = '{available, server, capabilities, error}'
@@ -97,4 +101,40 @@ test('entry classifies and dispatches with low-confidence clarifying fallback', 
   }
   assert.match(content, /clarifying_question/)
   assert.match(content, /ask_user/)
+})
+
+test('feature reviewer enforces the five-level priority order with named edges', async () => {
+  const reviewer = await agent('feature-reviewer')
+  const priorities = ['P1 设计', 'P2 功能', 'P3 可读性与可维护性', 'P4 测试覆盖', 'P5 风格与规范']
+  let last = -1
+  for (let i = 0; i < priorities.length; i++) {
+    const idx = reviewer.indexOf(priorities[i])
+    assert.ok(idx > last, `${priorities[i]} must appear in order after the previous priority`)
+    last = idx
+  }
+  for (const edge of ['空值', '超时', '并发']) {
+    assert.ok(reviewer.includes(edge), `reviewer must name edge case ${edge}`)
+  }
+  assert.match(reviewer, /圈复杂度/)
+  assert.match(reviewer, /拆.*更小/)
+  assert.match(reviewer, /Linter/)
+  assert.match(reviewer, /P1 \| P2 \| P3 \| P4 \| P5/)
+  assert.match(reviewer, /无 blocker 且无 P1 major/)
+})
+
+test('feature coder and planner align with the same priority principles', async () => {
+  const coder = await agent('feature-coder')
+  for (const edge of ['空值', '超时', '并发']) {
+    assert.ok(coder.includes(edge), `coder must name edge case ${edge}`)
+  }
+  assert.match(coder, /圈复杂度|拆为更小/)
+  assert.match(coder, /Linter/)
+
+  const planner = await agent('feature-planner')
+  assert.match(planner, /架构融入/)
+  assert.match(planner, /过度设计/)
+  assert.match(planner, /设计不足/)
+  for (const edge of ['空值', '超时', '并发']) {
+    assert.ok(planner.includes(edge), `planner must name edge case ${edge}`)
+  }
 })

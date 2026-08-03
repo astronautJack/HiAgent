@@ -13,6 +13,9 @@ build/
 # 测试样本（日志/wiki 样例，本地保留不入仓）
 tools/test/
 
+# test6 内网实验环境（clone 的 codebase + CRG 产物，本地保留不入仓）
+test6/
+
 # 经验 wiki 产物
 cases/
 *.log

@@ -41,7 +41,13 @@ description: 代码实现用例。按人工批准的设计执行 coder → CRG �
 
 ### Review
 
-调用 `feature-reviewer`，提示「独立审查当前 git diff。」输入 `{repo, design, implementation}`。校验 `REVIEW = {verdict:'pass|revise', findings:array, impact:string[]}`。`verdict==='revise'` 时 `feedback=review.findings`，记录日志，进入下一轮。
+调用 `feature-reviewer`，提示「按 P1 设计 → P2 功能 → P3 可读性/可维护性 → P4 测试覆盖 → P5 风格交 Linter 五级优先级独立审查当前 git diff。」输入 `{repo, design, implementation}`。校验 `REVIEW`：
+
+- `REVIEW = {verdict:'pass|revise', findings:array, impact:string[]}`
+- `findings[]` 每项含 `priority`(P1..P5)、`severity`(blocker|major|minor)、`file`、`line`、`message`，按 priority 从低序号到高序号排序。
+- 只有无 blocker 且无 P1 major 才 `pass`；否则 `revise`。
+
+`verdict==='revise'` 时 `feedback=review.findings`（priority 排序，coder 先修 P1），记录日志，进入下一轮。
 
 ### Test
 
