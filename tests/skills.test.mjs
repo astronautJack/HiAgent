@@ -138,3 +138,13 @@ test('feature coder and planner align with the same priority principles', async 
     assert.ok(planner.includes(edge), `planner must name edge case ${edge}`)
   }
 })
+
+test('log-parser collects dir/archive into a structured folder before triage', async () => {
+  const lp = await agent('log-parser')
+  assert.match(lp, /logscope-collect/)
+  assert.match(lp, /log_dir/)
+  assert.match(lp, /sources\[/)
+  for (const ext of ['zip', 'gz', 'rar', '7z', 'tar']) {
+    assert.ok(lp.toLowerCase().includes(ext), `log-parser must support .${ext}`)
+  }
+})

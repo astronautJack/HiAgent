@@ -2,9 +2,11 @@
 
 skill 之间只传版本化结构。字段变化必须升级 `schema_version` 并同步测试，不能让 agent 自由猜字段。
 
+> **注意：本文件是规范说明，agent 运行时不直接读它。** 实际生效的是各 agent/skill prompt 里内联复述的 schema 副本（`log-parser.md`、`diag/SKILL.md` 等）。改字段须**同步三处**：①本文件（规范）②对应 prompt 内联副本（执行）③`tests/`（门禁）。漏一处即漂移，且 skill 化后无运行时强校验，全靠 prompt + 测试 + 人审。
+
 ## `hiagent.log-digest.v1`
 
-由 `logscope-triage --json` 直接产生：
+由 `logscope-triage --json` 直接产生（单文件）；目录/压缩包输入时由 `log-parser` 经 `logscope-collect` 归一为纯文本目录后逐文件 triage、汇总成同一契约：
 
 ```json
 {
@@ -35,6 +37,23 @@ skill 之间只传版本化结构。字段变化必须升级 `schema_version` �
 ```
 
 `clusters[].count` 是本次输入日志内计数；Drain3 持久化 cluster size 不得作为本次频次。参数只返回 mask 类型，不返回可能敏感的实际值。
+
+### 收集模式（目录/压缩包输入）的可选字段
+
+输入是目录或压缩包时，`log-parser` 先用 `logscope-collect` 解压并按原始相对目录结构归一为纯文本目录，再逐文件 triage。顶层字段取自 primary 文件（含崩溃信号者），另加两个**可选**字段：
+
+```json
+{
+  "log_dir": "<workDir>/collected",
+  "sources": [
+    {"path":"device/hilog.txt","line_count":1500,"log_format":"auto","is_primary":false,"digest":{<完整 per-file digest>}},
+    {"path":"tombstone/crash.txt","line_count":17,"log_format":"generic","is_primary":true,"digest":{...}}
+  ]
+}
+```
+
+- `path` 相对 `log_dir`，保留原始结构。`code-tracer` 用它 `Read <log_dir>/<path>:<行号>` 直接取证，日志证据 `ref` 写真实文件路径而非合并行号。
+- `sources[]` 是加性可选字段，不破坏 v1；单文件输入时不出现。
 
 ## `hiagent.trace.v1`
 

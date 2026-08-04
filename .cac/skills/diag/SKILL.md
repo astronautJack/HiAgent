@@ -47,9 +47,11 @@ description: 日志定位用例。把日志压缩成有界 digest，沿 CRG 调�
 
 ## 阶段 3：Triage
 
-调用 `log-parser` subagent，提示「先执行 hiagent-run prepare，再把输入转换为唯一日志契约并原样返回。」输入 `{repo, runId, logPath, logText, logFormat, drainMode, profile, workDir}`，校验返回符合 `DIGEST` 契约。
+`logPath` 现在可以是单文件、目录或压缩包（.zip/.tar.gz/.gz/.7z/.rar 等）。调用 `log-parser` subagent，提示「先执行 hiagent-run prepare；若输入是目录或压缩包，先 logscope-collect 归一为纯文本日志目录（保留结构），再逐文件 triage。」输入 `{repo, runId, logPath, logText, logFormat, drainMode, profile, workDir}`，校验返回符合 `DIGEST` 契约。
 
-`DIGEST` 必填字段：`schema_version='hiagent.log-digest.v1'`、`raw_file`、`log_format`、`drain_mode`、`line_count`、`claimed_error`（可为 null）、`symbols`、`clusters`、`hisysevent_anchors`、`fault_frames`、`key_lines`、`truncated`。
+`DIGEST` 必填字段：`schema_version='hiagent.log-digest.v1'`、`raw_file`、`log_format`、`drain_mode`、`line_count`、`claimed_error`（可为 null）、`symbols`、`clusters`、`hisysevent_anchors`、`fault_frames`、`key_lines`、`truncated`。顶层字段取自 primary 文件（含崩溃信号者）。
+
+收集模式（输入是目录/压缩包）时 `DIGEST` 额外含可选 `log_dir`（收集后纯文本目录）与 `sources[]`：每项 `{path(相对 log_dir), line_count, log_format, is_primary, digest(该文件完整 digest)}`。`path` 保留原始目录结构，后续 code-tracer 可 `Read <log_dir>/<path>:<行号>` 直接取证。
 
 ## 阶段 4：Knowledge
 
@@ -65,11 +67,11 @@ description: 日志定位用例。把日志压缩成有界 digest，沿 CRG 调�
 
 ### Trace
 
-调用 `code-tracer` subagent，提示「你是独立 investigator，只定位并返回结构化 trace，禁止写报告。」输入 `{repo, digest, knowledge, reviewer_findings:[...verdict.findings, ...verdict.contradictions]}`，校验返回符合 `TRACE` 契约：
+调用 `code-tracer` subagent，提示「你是独立 investigator，只定位并返回结构化 trace，禁止写报告。」输入 `{repo, digest, log_dir, sources, knowledge, reviewer_findings:[...verdict.findings, ...verdict.contradictions]}`（`log_dir`/`sources` 在收集模式提供，单文件时为空），校验返回符合 `TRACE` 契约：
 
 - `TRACE.schema_version='hiagent.trace.v1'`
 - `root_cause = {file:string, line:integer, symbol:string, summary:string, confidence:'high|medium|low'}`，且 `root_cause.file` 必须通过 `isSafeRelativePath`，否则 `{aborted:true, stage:'trace-contract', error:'trace 返回了非法源码相对路径'}`。
-- `evidence[].{kind:'log|code|crg|config|wiki', ref, claim}`
+- `evidence[].{kind:'log|code|crg|config|wiki', ref, claim}` —— 收集模式下日志证据 `ref` 应写真实文件相对路径（`<sources[].path>:<行号>`），不得用合并行号。
 - `impact: string[]`、`fix.{summary, changes[].{file,description}}`、`open_questions: string[]`
 
 ### Review
