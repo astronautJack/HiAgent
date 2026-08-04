@@ -135,7 +135,8 @@ def test_binary_skipped(tmp_path):
 
 def test_rar_skips_gracefully_when_no_tool(tmp_path, monkeypatch):
     import hiagent_tools.log_collect as mod
-    monkeypatch.setattr(mod, "_HAS_RAR", False)
+    monkeypatch.setattr(mod, "_find_extractor", lambda: None)
+    monkeypatch.setattr(mod, "_HAS_7Z", False)
     root = tmp_path / "logs"
     root.mkdir()
     (root / "x.rar").write_bytes(b"fake rar")  # not a real rar; just probe the path
@@ -144,6 +145,21 @@ def test_rar_skips_gracefully_when_no_tool(tmp_path, monkeypatch):
     assert r["ok"]
     assert any("x.rar" in s["path"] for s in r["skipped"])
     assert r["files"] == []
+
+
+def test_extractor_lookup_prefers_winrar(monkeypatch):
+    import hiagent_tools.log_collect as mod
+    # 同时有 WinRAR.exe 和 bsdtar 时，优先返回 winrar
+    monkeypatch.setattr(mod.shutil, "which", lambda name: {
+        "WinRAR.exe": "C:/Program Files/WinRAR/WinRAR.exe",
+        "bsdtar": "/usr/bin/bsdtar",
+    }.get(name))
+    r = mod._find_extractor()
+    assert r is not None and r[0] == "winrar"
+    # 都没有时返回 None
+    monkeypatch.setattr(mod.shutil, "which", lambda name: None)
+    monkeypatch.setattr(mod.Path, "exists", lambda self: False)
+    assert mod._find_extractor() is None
 
 
 def test_cli_json_output(tmp_path):

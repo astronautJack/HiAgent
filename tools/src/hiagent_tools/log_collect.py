@@ -13,6 +13,7 @@ import json
 import lzma
 import os
 import shutil
+import subprocess
 import sys
 import tarfile
 import zipfile
@@ -24,11 +25,9 @@ try:
 except Exception:
     _HAS_7Z = False
 
-try:
-    import rarfile  # type: ignore
-    _HAS_RAR = True
-except Exception:
-    _HAS_RAR = False
+# .7z 与 .rar 优先走系统 WinRAR.exe（公司默认装 WinRAR，可解 rar/7z/zip/tar/gz/bz2/xz 等）；
+# 兜底 7z.exe、bsdtar；.7z 再兜底可选的 py7zr。不引入额外 Python 依赖。
+_NO_BINARY_NOTE = "no WinRAR/7z/bsdtar found; install WinRAR (or 7-Zip/libarchive) to extract .7z/.rar"
 
 TEXT_EXTS = {".log", ".txt", ".hilog", ".tlog", ".out", ".err", ".crash",
              ".tombstone", ".md", ".json", ".xml", ".tsv", ".csv"}
@@ -128,26 +127,82 @@ def _extract_zip(src, dest):
     return True, ""
 
 
+def _find_extractor():
+    """返回 (kind, exe_path) 或 None。公司默认装 WinRAR（WinRAR.exe 可解 rar/7z/zip/tar/gz/bz2/xz）。
+    依次找：WinRAR.exe（PATH → 默认安装目录）→ 7z.exe → bsdtar。"""
+    for name in ("WinRAR", "WinRAR.exe"):
+        p = shutil.which(name)
+        if p:
+            return ("winrar", p)
+    for base in (r"C:\Program Files\WinRAR", r"C:\Program Files (x86)\WinRAR"):
+        cand = Path(base) / "WinRAR.exe"
+        if cand.exists():
+            return ("winrar", str(cand))
+    for name in ("7z", "7z.exe"):
+        p = shutil.which(name)
+        if p:
+            return ("7z", p)
+    for base in (r"C:\Program Files\7-Zip", r"C:\Program Files (x86)\7-Zip"):
+        cand = Path(base) / "7z.exe"
+        if cand.exists():
+            return ("7z", str(cand))
+    p = shutil.which("bsdtar")
+    if p:
+        return ("bsdtar", p)
+    return None
+
+
+def _run_extractor(kind, exe, src, dest):
+    """用找到的二进制解压。winrar/7z/bsdtar 各自命令行不同。"""
+    src, dest = str(src), str(dest)
+    if kind == "winrar":
+        # WinRAR x -y <archive> <dest/>  ；尾部 sep 让 WinRAR 把 dest 当目录
+        subprocess.run([exe, "x", "-y", src, dest + os.sep],
+                       check=True, capture_output=True)
+    elif kind == "7z":
+        subprocess.run([exe, "x", src, f"-o{dest}", "-y"],
+                       check=True, capture_output=True)
+    else:  # bsdtar
+        subprocess.run([exe, "xf", src, "-C", dest],
+                       check=True, capture_output=True)
+
+
 def _extract_7z(src, dest):
-    if not _HAS_7Z:
-        return False, "py7zr not installed; cannot extract .7z"
-    with py7zr.SevenZipFile(src) as sz:
-        sz.extractall(dest)
-    return True, ""
+    """优先系统 WinRAR.exe（公司默认有）；兜底 7z/bsdtar；再兜底可选 py7zr。"""
+    tool = _find_extractor()
+    if tool:
+        kind, exe = tool
+        Path(dest).mkdir(parents=True, exist_ok=True)
+        try:
+            _run_extractor(kind, exe, src, dest)
+            return True, ""
+        except Exception as exc:
+            last = f"{kind} 7z extract failed: {exc}"
+    else:
+        last = _NO_BINARY_NOTE
+    if _HAS_7Z:
+        Path(dest).mkdir(parents=True, exist_ok=True)
+        try:
+            with py7zr.SevenZipFile(src) as sz:
+                sz.extractall(dest)
+            return True, ""
+        except Exception as exc:
+            last = f"py7zr failed: {exc}"
+    return False, last or _NO_BINARY_NOTE
 
 
 def _extract_rar(src, dest):
-    if not _HAS_RAR:
-        return False, "rarfile not installed; cannot extract .rar"
+    """RAR 闭源、无纯 Python 解码器；靠系统 WinRAR.exe（公司默认有），兜底 7z/bsdtar。"""
+    tool = _find_extractor()
+    if tool is None:
+        return False, _NO_BINARY_NOTE
+    kind, exe = tool
+    Path(dest).mkdir(parents=True, exist_ok=True)
     try:
-        with rarfile.RarFile(src) as rf:
-            for info in rf.infolist():
-                if _safe_member(info.filename) is None or info.is_dir():
-                    continue
-                rf.extract(info, dest)
+        _run_extractor(kind, exe, src, dest)
         return True, ""
     except Exception as exc:
-        return False, f"rar extract failed: {exc}"
+        return False, f"{kind} rar extract failed: {exc}"
 
 
 def _decompress_single(src, kind, dest):
