@@ -69,3 +69,15 @@ test('trace investigation review and report writing use isolated roles', async (
     assert.match(skill, /trace-report-writer/)
   }
 })
+
+
+test('powershell scripts carry a UTF-8 BOM (Windows PowerShell 5.1 reads Chinese correctly)', async () => {
+  const directory = new URL('../scripts/', import.meta.url)
+  const files = (await readdir(directory)).filter(name => name.endsWith('.ps1')).sort()
+  assert.deepEqual(files, ['configure-wiki.ps1', 'install.ps1', 'test.ps1'])
+  for (const file of files) {
+    const buf = await readFile(new URL(file, directory))
+    const bom = buf.subarray(0, 3)
+    assert.deepEqual([...bom], [0xEF, 0xBB, 0xBF], `${file} must start with UTF-8 BOM`)
+  }
+})
