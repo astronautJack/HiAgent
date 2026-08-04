@@ -1,3 +1,9 @@
+[submodule "test3/codebase/NewPipe"]
+	url = https://github.com/TeamNewPipe/NewPipe.git
+	path = test3/codebase/NewPipe
+[submodule "test4/codebase/apps-android-commons"]
+	url = https://github.com/commons-app/apps-android-commons.git
+	path = test4/codebase/apps-android-commons
 [submodule "test5/codebase/react-native"]
 	url = https://github.com/facebook/react-native.git
 	path = test5/codebase/react-native

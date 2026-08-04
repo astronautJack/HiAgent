@@ -1,0 +1,28 @@
+09-22 14:32:10.812 4287 4287 I ActivityTaskManager: CONFIGURATION_CHANGED — orientation changed (portrait → landscape)
+09-22 14:32:10.950 4287 4287 D UploadProgressActivity: updateMenuItems: rebuilding menu after configuration change
+09-22 14:32:11.204 4287 4287 E AndroidRuntime: FATAL EXCEPTION: main
+09-22 14:32:11.204 4287 4287 E AndroidRuntime: Process: fr.free.nrw.commons, PID: 4287
+09-22 14:32:11.204 4287 4287 E AndroidRuntime: kotlin.UninitializedPropertyAccessException: lateinit property pendingUploadsPresenter has not been initialized
+09-22 14:32:11.204 4287 4287 E AndroidRuntime: 	at fr.free.nrw.commons.upload.PendingUploadsFragment.getPendingUploadsPresenter(PendingUploadsFragment.kt:32)
+09-22 14:32:11.204 4287 4287 E AndroidRuntime: 	at fr.free.nrw.commons.upload.PendingUploadsFragment.pauseUploads(PendingUploadsFragment.kt:150)
+09-22 14:32:11.204 4287 4287 E AndroidRuntime: 	at fr.free.nrw.commons.upload.UploadProgressActivity.updateMenuItems$lambda$0(UploadProgressActivity.kt:122)
+09-22 14:32:11.204 4287 4287 E AndroidRuntime: 	at fr.free.nrw.commons.upload.UploadProgressActivity.$r8$lambda$n6pF8kEp5zRkX_pwwNBTwt7f0X4(UploadProgressActivity.kt:0)
+09-22 14:32:11.204 4287 4287 E AndroidRuntime: 	at fr.free.nrw.commons.upload.UploadProgressActivity$$ExternalSyntheticLambda0.onMenuItemClick(R8$$SyntheticClass:0)
+09-22 14:32:11.204 4287 4287 E AndroidRuntime: 	at androidx.appcompat.view.menu.MenuItemImpl.invoke(MenuItemImpl.java:155)
+09-22 14:32:11.204 4287 4287 E AndroidRuntime: 	at androidx.appcompat.view.menu.MenuBuilder.performItemAction(MenuBuilder.java:987)
+09-22 14:32:11.204 4287 4287 E AndroidRuntime: 	at androidx.appcompat.view.menu.MenuBuilder.performItemAction(MenuBuilder.java:977)
+09-22 14:32:11.204 4287 4287 E AndroidRuntime: 	at androidx.appcompat.widget.ActionMenuView.invokeItem(ActionMenuView.java:625)
+09-22 14:32:11.204 4287 4287 E AndroidRuntime: 	at androidx.appcompat.view.menu.ActionMenuItemView.onClick(ActionMenuItemView.java:156)
+09-22 14:32:11.204 4287 4287 E AndroidRuntime: 	at android.view.View.performClick(View.java:8028)
+09-22 14:32:11.204 4287 4287 E AndroidRuntime: 	at android.view.View.performClickInternal(View.java:8005)
+09-22 14:32:11.204 4287 4287 E AndroidRuntime: 	at android.view.View$PerformClick.run(View.java:31238)
+09-22 14:32:11.204 4287 4287 E AndroidRuntime: 	at android.os.Handler.handleCallback(Handler.java:959)
+09-22 14:32:11.204 4287 4287 E AndroidRuntime: 	at android.os.Handler.dispatchMessage(Handler.java:100)
+09-22 14:32:11.204 4287 4287 E AndroidRuntime: 	at android.os.Looper.loopOnce(Looper.java:232)
+09-22 14:32:11.204 4287 4287 E AndroidRuntime: 	at android.os.Looper.loop(Looper.java:317)
+09-22 14:32:11.204 4287 4287 E AndroidRuntime: 	at android.app.ActivityThread.main(ActivityThread.java:8751)
+09-22 14:32:11.204 4287 4287 E AndroidRuntime: 	at java.lang.reflect.Method.invoke(Native Method)
+09-22 14:32:11.204 4287 4287 E AndroidRuntime: 	at com.android.internal.os.RuntimeInit$MethodAndArgsCaller.run(RuntimeInit.java:580)
+09-22 14:32:11.204 4287 4287 E AndroidRuntime: 	at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:892)
+09-22 14:32:11.204 4287 4287 E AndroidRuntime: IS_SILENT=false
+09-22 14:32:11.204 4287 4287 E AndroidRuntime: USER_COMMENT=I hit the pause button since there were some unfinished upload batches that hadn't made any progress in several weeks.
