@@ -136,7 +136,6 @@ def test_binary_skipped(tmp_path):
 def test_rar_skips_gracefully_when_no_tool(tmp_path, monkeypatch):
     import hiagent_tools.log_collect as mod
     monkeypatch.setattr(mod, "_find_extractor", lambda: None)
-    monkeypatch.setattr(mod, "_HAS_7Z", False)
     root = tmp_path / "logs"
     root.mkdir()
     (root / "x.rar").write_bytes(b"fake rar")  # not a real rar; just probe the path

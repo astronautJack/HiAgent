@@ -19,14 +19,8 @@ import tarfile
 import zipfile
 from pathlib import Path
 
-try:
-    import py7zr  # type: ignore
-    _HAS_7Z = True
-except Exception:
-    _HAS_7Z = False
-
-# .7z 与 .rar 优先走系统 WinRAR.exe（公司默认装 WinRAR，可解 rar/7z/zip/tar/gz/bz2/xz 等）；
-# 兜底 7z.exe、bsdtar；.7z 再兜底可选的 py7zr。不引入额外 Python 依赖。
+# .7z 与 .rar 都走系统 WinRAR.exe（公司默认装 WinRAR，可解 rar/7z/zip/tar/gz/bz2/xz 等）；
+# 兜底 7z.exe、bsdtar。不引入额外 Python 依赖。
 _NO_BINARY_NOTE = "no WinRAR/7z/bsdtar found; install WinRAR (or 7-Zip/libarchive) to extract .7z/.rar"
 
 TEXT_EXTS = {".log", ".txt", ".hilog", ".tlog", ".out", ".err", ".crash",
@@ -168,27 +162,17 @@ def _run_extractor(kind, exe, src, dest):
 
 
 def _extract_7z(src, dest):
-    """优先系统 WinRAR.exe（公司默认有）；兜底 7z/bsdtar；再兜底可选 py7zr。"""
+    """靠系统 WinRAR.exe（公司默认有），兜底 7z/bsdtar。无纯 Python 兜底。"""
     tool = _find_extractor()
-    if tool:
-        kind, exe = tool
-        Path(dest).mkdir(parents=True, exist_ok=True)
-        try:
-            _run_extractor(kind, exe, src, dest)
-            return True, ""
-        except Exception as exc:
-            last = f"{kind} 7z extract failed: {exc}"
-    else:
-        last = _NO_BINARY_NOTE
-    if _HAS_7Z:
-        Path(dest).mkdir(parents=True, exist_ok=True)
-        try:
-            with py7zr.SevenZipFile(src) as sz:
-                sz.extractall(dest)
-            return True, ""
-        except Exception as exc:
-            last = f"py7zr failed: {exc}"
-    return False, last or _NO_BINARY_NOTE
+    if tool is None:
+        return False, _NO_BINARY_NOTE
+    kind, exe = tool
+    Path(dest).mkdir(parents=True, exist_ok=True)
+    try:
+        _run_extractor(kind, exe, src, dest)
+        return True, ""
+    except Exception as exc:
+        return False, f"{kind} 7z extract failed: {exc}"
 
 
 def _extract_rar(src, dest):
